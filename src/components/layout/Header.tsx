@@ -4,26 +4,60 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SocialLinks } from "./SocialLinks";
 
-type NavItem = { label: string; href: string };
+type SubItem = { label: string; href: string };
+type NavItem = { label: string; href: string; children?: SubItem[] };
 
 const NAV: NavItem[] = [
   { label: "Home", href: "/" },
-  { label: "Live Market", href: "/market" },
-  { label: "Stocks", href: "/market/stocks" },
-  { label: "Mutual Funds", href: "/market/mutual-funds" },
-  { label: "IPO", href: "/market/ipo" },
-  { label: "Commodities", href: "/market/commodities" },
-  { label: "Crypto", href: "/market/crypto" },
-  { label: "Economy", href: "/news/india" },
-  { label: "Personal Finance", href: "/news/personal-finance" },
-  { label: "Technology", href: "/news/technology" },
-  { label: "Gujarat", href: "/news/gujarat" },
-  { label: "National", href: "/news/national" },
-  { label: "Global", href: "/news/global" },
-  { label: "Entertainment", href: "/news/entertainment" },
-  { label: "About", href: "/about-us" },
-  { label: "Career", href: "/career" },
-  { label: "Contact", href: "/contact" },
+  {
+    label: "Markets",
+    href: "/market",
+    children: [
+      { label: "Live Market", href: "/market" },
+      { label: "Stocks", href: "/market/stocks" },
+      { label: "Mutual Funds", href: "/market/mutual-funds" },
+      { label: "IPO", href: "/market/ipo" },
+      { label: "Commodities", href: "/market/commodities" },
+      { label: "Cryptocurrency", href: "/market/crypto" },
+    ],
+  },
+  {
+    label: "News",
+    href: "/news/india",
+    children: [
+      { label: "Economy", href: "/news/india" },
+      { label: "Personal Finance", href: "/news/personal-finance" },
+      { label: "Technology", href: "/news/technology" },
+      { label: "Gujarat", href: "/news/gujarat" },
+      { label: "National", href: "/news/national" },
+      { label: "Global", href: "/news/global" },
+      { label: "Entertainment", href: "/news/entertainment" },
+    ],
+  },
+  {
+    label: "Tools",
+    href: "/tools",
+    children: [
+      { label: "SIP Calculator", href: "/tools/sip" },
+      { label: "FD Calculator", href: "/tools/fd" },
+      { label: "EMI Calculator", href: "/tools/emi" },
+      { label: "Tax Calculator", href: "/tools/tax" },
+      { label: "SWP Calculator", href: "/tools/swp" },
+    ],
+  },
+  {
+    label: "Company",
+    href: "/about-us",
+    children: [
+      { label: "About", href: "/about-us" },
+      { label: "Advertisement", href: "/advertise" },
+      { label: "Career", href: "/career" },
+      { label: "Contact", href: "/contact" },
+      { label: "Disclaimer", href: "/disclaimer" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms of Use", href: "/terms-of-use" },
+    ],
+  },
 ];
 
 function useTodayLabel() {
@@ -39,10 +73,17 @@ function useTodayLabel() {
   return label;
 }
 
+function isActive(path: string, pathname: string) {
+  if (path === "/") return pathname === "/";
+  return pathname === path || pathname.startsWith(path + "/");
+}
+
 export function Header() {
   const today = useTodayLabel();
   const [open, setOpen] = useState(false);
   const [activePath, setActivePath] = useState("/");
+  // Track which desktop submenu is open (hover or click)
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   useEffect(() => {
     setActivePath(window.location.pathname);
@@ -87,25 +128,75 @@ export function Header() {
 
       {/* Nav bar */}
       <nav className="from-dark-navy2 to-primary-navy relative w-full overflow-visible border-b border-[#00FFEE] bg-gradient-to-r text-white">
-        <div className="mx-auto flex items-stretch px-4 xl:px-0">
-          <div className="w-full justify-center xl:flex">
-            <div className="flex justify-between text-[10px] font-bold tracking-normal sm:font-semibold lg:text-sm">
-              {/* Desktop nav links */}
+        <div className="mx-auto w-full max-w-7xl px-4 xl:px-0">
+          <div className="flex w-full items-center justify-between text-[10px] font-bold tracking-normal sm:font-semibold lg:text-sm">
+              {/* Desktop nav with dropdowns */}
               <div className="hidden items-stretch lg:flex">
                 {NAV.map((item) => {
-                  const active = activePath === item.href;
+                  const active = isActive(item.href, activePath);
+                  const hasChildren = !!item.children;
+                  const isMenuOpen = openMenu === item.label;
+
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center justify-center whitespace-nowrap px-3.5 py-3 xl:px-2.5 xl:py-3 transition-colors border-b-2 ${
-                        active
-                          ? "border-[#00FFEE] bg-[#00219A] text-[#00FFEE]"
-                          : "border-transparent hover:bg-white/5"
-                      }`}
+                    <div
+                      key={item.label}
+                      className="relative"
+                      onMouseEnter={() => setOpenMenu(hasChildren ? item.label : null)}
+                      onMouseLeave={() => setOpenMenu(null)}
                     >
-                      {item.label}
-                    </Link>
+                      {hasChildren ? (
+                        <button
+                          className={`flex h-full items-center justify-center gap-1 px-3.5 py-3 xl:px-2.5 xl:py-3 whitespace-nowrap border-b-2 transition-colors ${
+                            active
+                              ? "border-[#00FFEE] bg-[#00219A] text-[#00FFEE]"
+                              : "border-transparent hover:bg-white/5"
+                          } ${isMenuOpen ? "bg-white/5" : ""}`}
+                          onClick={() => setOpenMenu(isMenuOpen ? null : item.label)}
+                          aria-expanded={isMenuOpen}
+                        >
+                          {item.label}
+                          <svg
+                            className={`h-3 w-3 transition-transform duration-200 ${isMenuOpen ? "rotate-180" : ""}`}
+                            viewBox="0 0 320 512"
+                            fill="currentColor"
+                            strokeWidth="0"
+                          >
+                            <path d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className={`flex items-center justify-center px-3.5 py-3 xl:px-2.5 xl:py-3 whitespace-nowrap border-b-2 transition-colors ${
+                            active
+                              ? "border-[#00FFEE] bg-[#00219A] text-[#00FFEE]"
+                              : "border-transparent hover:bg-white/5"
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+
+                      {/* Dropdown */}
+                      {hasChildren && isMenuOpen && (
+                        <div className="absolute top-full left-0 z-50 min-w-52 bg-white py-2 text-slate-800 shadow-xl ring-1 ring-black/5">
+                          {item.children!.map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={() => setOpenMenu(null)}
+                              className={`block px-4 py-2.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${
+                                isActive(child.href, activePath)
+                                  ? "bg-blue-50 font-semibold text-blue-700"
+                                  : ""
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -149,28 +240,72 @@ export function Header() {
               <div className="hidden items-center gap-1 sm:flex">
                 <SocialLinks />
               </div>
-            </div>
           </div>
         </div>
 
-        {/* Mobile dropdown */}
+        {/* Mobile menu with collapsible submenus */}
         {open && (
           <div className="lg:hidden border-t border-white/10 bg-dark-navy1">
-            <div className="mx-auto grid max-w-7xl grid-cols-2 gap-1 px-4 py-3 text-sm">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`rounded px-3 py-2 ${
-                    activePath === item.href
-                      ? "bg-[#00219A] text-[#00FFEE]"
-                      : "text-white hover:bg-white/5"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="mx-auto max-w-7xl px-4 py-3">
+              {NAV.map((item) => {
+                const hasChildren = !!item.children;
+                const expanded = openMenu === item.label;
+                return (
+                  <div key={item.label} className="border-b border-white/5 last:border-0">
+                    {hasChildren ? (
+                      <>
+                        <button
+                          className="flex w-full items-center justify-between py-3 text-sm font-semibold text-white"
+                          onClick={() => setOpenMenu(expanded ? null : item.label)}
+                          aria-expanded={expanded}
+                        >
+                          {item.label}
+                          <svg
+                            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                            viewBox="0 0 320 512"
+                            fill="currentColor"
+                          >
+                            <path d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z" />
+                          </svg>
+                        </button>
+                        {expanded && (
+                          <div className="pb-2 pl-4">
+                            {item.children!.map((child) => (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={() => {
+                                  setOpen(false);
+                                  setOpenMenu(null);
+                                }}
+                                className={`block py-2.5 text-sm transition-colors ${
+                                  isActive(child.href, activePath)
+                                    ? "text-[#00FFEE]"
+                                    : "text-gray-300 hover:text-white"
+                                }`}
+                              >
+                                {child.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={`block py-3 text-sm font-semibold transition-colors ${
+                          isActive(item.href, activePath)
+                              ? "text-[#00FFEE]"
+                              : "text-white hover:text-[#00FFEE]"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="px-4 pb-4 sm:hidden">
               <SocialLinks />

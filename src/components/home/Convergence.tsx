@@ -95,9 +95,9 @@ export function Convergence() {
 
       const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: section.current,
-          start: "center center",
-          end: `+=${80 * slideEls.length}%`,
+          trigger: pinWrap.current,
+          start: "top top",
+          end: `+=${100 * slideEls.length}%`,
           pin: pinWrap.current,
           pinSpacing: true,
           anticipatePin: 1,
@@ -106,7 +106,7 @@ export function Convergence() {
           onUpdate: (self) => {
             const idx = Math.min(count, Math.round(self.progress * count));
             setActiveIdx(idx);
-            const progressBar = section.current!.querySelector<HTMLElement>(
+            const progressBar = pinWrap.current!.querySelector<HTMLElement>(
               "[data-progress-bar]"
             );
             if (progressBar) {
@@ -139,7 +139,7 @@ export function Convergence() {
   );
 
   return (
-    <section id="convergence" ref={section} className="bg-kn-deep relative mt-20 lg:mt-0">
+    <section id="convergence" ref={section} className="bg-kn-deep relative">
       <div ref={pinWrap} className="flex h-svh flex-col py-16 md:justify-center md:gap-8 lg:gap-10 lg:py-20">
         <div className="mx-auto mb-8 w-full max-w-7xl px-0 sm:px-4">
           <p className="text-blue-700 text-sm font-medium tracking-[0.2em] uppercase">
@@ -161,8 +161,8 @@ export function Convergence() {
             <div className="absolute top-0 left-0 h-full w-px bg-slate-300" />
             <div
               data-progress-bar
-              className="from-blue-600 to-cyan-600 absolute top-0 left-0 w-px bg-gradient-to-b transition-all duration-300"
-              style={{ height: `${((active + 1) / STATS.length) * 100}%` }}
+              className="from-blue-600 to-cyan-600 absolute top-0 left-0 w-px bg-gradient-to-b"
+              style={{ height: `${(1 / STATS.length) * 100}%` }}
             />
             <ul className="space-y-6 pl-6">
               {STATS.map((s, i) => (
@@ -187,9 +187,9 @@ export function Convergence() {
             </ul>
           </nav>
 
-          {/* Slides (translate up on scroll) */}
-          <div className="relative overflow-hidden">
-            <div ref={slides}>
+          {/* Slides viewport — fixed height (h-105) clips to one slide at a time */}
+          <div className="relative h-105 overflow-hidden">
+            <div ref={slides} className="will-change-transform">
               {STATS.map((s) => (
                 <div
                   key={s.id}

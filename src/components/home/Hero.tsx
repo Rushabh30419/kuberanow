@@ -54,6 +54,36 @@ export function Hero() {
 
       gsap.set(map, { transformOrigin: "30% 60%" });
 
+      // Position the pulse dot exactly on Gandhinagar. The dot lives in the
+      // outer illustration, but Gandhinagar's coords are relative to the map
+      // SVG's viewBox — and the map is offset + scaled 2× at its final state.
+      // We snap the map to its final transform, measure the rendered marker
+      // via getBoundingClientRect (which folds in the scale), convert to a
+      // percentage of the illustration, then reset for the entrance animation.
+      const positionPulse = () => {
+        if (!root.current || !pulse || !map) return;
+        const gandhinagar = root.current.querySelector<SVGCircleElement>(
+          "[data-hero-gandhinagar-marker]"
+        );
+        if (!gandhinagar) return;
+        // Snap to final state to measure the resting position.
+        gsap.set(map, { x: 0, scale: 2 });
+        const rootRect = root.current.getBoundingClientRect();
+        const markerRect = gandhinagar.getBoundingClientRect();
+        if (!rootRect.width || !rootRect.height) return;
+        const cx = markerRect.left + markerRect.width / 2 - rootRect.left;
+        const cy = markerRect.top + markerRect.height / 2 - rootRect.top;
+        gsap.set(pulse, {
+          left: `${(cx / rootRect.width) * 100}%`,
+          top: `${(cy / rootRect.height) * 100}%`,
+        });
+      };
+      positionPulse();
+      // Re-measure after fonts/layout settle (Noto Sans loads async).
+      const rafId = requestAnimationFrame(positionPulse);
+      const loadId = window.setTimeout(positionPulse, 600);
+      window.addEventListener("resize", positionPulse);
+
       const reset = () => {
         gsap.set(map, { x: -120, scale: 1.3, opacity: 0 });
         gsap.set(pulse, { scale: 0, opacity: 0 });
@@ -100,6 +130,9 @@ export function Hero() {
         .to([arrow, tail], { opacity: 0, duration: 0.35, ease: "power2.in" });
 
       return () => {
+        window.removeEventListener("resize", positionPulse);
+        cancelAnimationFrame(rafId);
+        window.clearTimeout(loadId);
         tl.kill();
         gsap.killTweensOf([map, pulse, label, ...bars, card, arrow, tail, line, glow].filter(Boolean));
       };
@@ -192,7 +225,7 @@ export function Hero() {
                 />
                 <g>
                   <line x1="500" y1="348" x2="500" y2="326" stroke="#1e3a8a" strokeWidth="1.5" opacity="0.8" />
-                  <circle cx="500" cy="348" r="5" fill="#1e3a8a" />
+                  <circle data-hero-gandhinagar-marker="true" cx="500" cy="348" r="5" fill="#1e3a8a" />
                   <circle cx="500" cy="348" r="2.2" fill="#ffffff" />
                 </g>
                 <text
@@ -211,11 +244,10 @@ export function Hero() {
               </svg>
             </div>
 
-            {/* Pulsing dot */}
+            {/* Pulsing dot — positioned on Gandhinagar by JS (see positionPulse) */}
             <div
               data-hero-pulse="true"
               className="pointer-events-none absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-blue-500/70 bg-blue-500/20"
-              style={{ left: "69.53%", top: "39.84%" }}
             />
 
             {/* Rising bars (with labels) */}
