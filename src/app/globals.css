@@ -1,26 +1,122 @@
 @import "tailwindcss";
 
+/* ===== KuberaNow design tokens (extracted from kuberanow.com) ===== */
+@theme {
+  /* Brand navy palette */
+  --color-primary: #010874;
+  --color-primary-navy: #000ec0;
+  --color-dark-navy1: #00065c;
+  --color-dark-navy2: #000764;
+  --color-indigo-light: #262d94;
+  --color-indigo-dark: #0d1483;
+  --color-dark-blue: #010874;
+  --color-light-navy4: #d7d9ff;
+
+  /* Page surface */
+  --color-background-color: #f3f4ff;
+  --color-background-hover: #00219a;
+  --color-surface: #ffffff;
+  --color-kn-deep: #f8fafc; /* section bg used across home */
+
+  /* Accent / borders */
+  --color-cyan-blue: #00ffee;
+  --color-border-soft: #e5ddd0;
+  --color-divider: #dadcff;
+  --color-text-disclaimer: #313131;
+
+  /* Career palette (reused on company pages) */
+  --color-career-heading: #1a1411;
+  --color-career-dark: #313131;
+  --color-career-muted: #6e6e6e;
+  --color-career-stroke: #dadcff;
+  --color-career-chip-border: #cacdff;
+  --color-career-chip-bg: #d7d9ff;
+  --color-career-tint: #efefff;
+  --color-career-input-border: #cecece;
+  --color-career-accent: #00ffee;
+  --color-ad-leaderboard-bg: #e0e2ff;
+
+  /* Typography scale */
+  --font-sans: var(--font-noto-sans), sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --text-subheading-big: 22px;
+  --text-subheading-small: 16px;
+  --text-content-big: 16px;
+  --text-content-small: 12px;
+  --text-heading-small: 18px;
+
+  /* Gradients */
+  --background-image-about-gradient: linear-gradient(
+    268.06deg,
+    #000ec0 -48.01%,
+    #000764 98.53%
+  );
+  --background-image-contact-gradient: linear-gradient(
+    268.06deg,
+    #000ec0 2.86%,
+    #000764 106.43%
+  );
+  --background-image-contact-ad-gradient: linear-gradient(
+    265.92deg,
+    #000ec0 2.79%,
+    #000764 98.3%
+  );
+  --background-image-career-search: linear-gradient(
+    268.06deg,
+    #000ec0 48.38%,
+    #000764 106.43%
+  );
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--color-background-color);
+  --foreground: #0f172b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@supports (color: lab(0% 0 0)) {
+  /* keep brand palette stable; no lab overrides needed */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar to match brand */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #efefff;
+}
+::-webkit-scrollbar-thumb {
+  background: #dadcff;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cacdff;
+}
+
+/* Utility: line clamp helpers (Tailwind v4 ships core but keep safe) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
