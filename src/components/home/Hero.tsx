@@ -142,7 +142,7 @@ export function Hero() {
 
   return (
     <section id="hero" className="bg-kn-deep relative overflow-hidden lg:min-h-svh">
-      <div className="relative mx-auto flex max-w-7xl flex-col px-0 py-10 pt-0! sm:px-4 md:py-20 lg:min-h-svh lg:justify-center lg:px-8 lg:py-12 lg:pt-20">
+      <div className="relative mx-auto flex max-w-7xl flex-col px-4 py-10 pt-0! sm:px-4 md:py-20 lg:min-h-svh lg:justify-center lg:px-8 lg:py-12 lg:pt-20">
         <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-medium tracking-widest text-blue-800">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-600" />
           KuberaNow

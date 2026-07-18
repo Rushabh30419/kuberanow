@@ -76,17 +76,17 @@ export function Footer() {
             <SocialLinks iconSize={26} />
           </div>
 
-          <div className="flex w-full flex-wrap justify-between gap-y-6 xl:w-max xl:gap-0">
+          <div className="grid w-full grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 xl:w-max xl:gap-0">
             {COLUMNS.map((col) => (
               <div
                 key={col.heading}
-                className="flex w-40 flex-col gap-4 font-sans xl:min-w-[11.5rem]"
+                className="flex min-w-0 flex-col gap-3 font-sans xl:min-w-[11.5rem] xl:gap-4"
               >
                 <h3 className="text-sm font-normal tracking-wider text-[#00FFEE] uppercase">
                   {col.heading}
                 </h3>
                 {col.links.map((l) => (
-                  <div key={l.href} className="leading-[1.4] hover:scale-y-105">
+                  <div key={l.href} className="leading-[1.4]">
                     <Link
                       href={l.href}
                       className="text-sm transition-colors hover:text-white"

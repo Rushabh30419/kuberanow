@@ -124,7 +124,7 @@ export function Ecosystem() {
     <section
       id="ecosystem"
       ref={section}
-      className="bg-kn-deep relative px-0! pt-6 sm:px-4! sm:pt-16"
+      className="bg-kn-deep relative px-4! pt-6 sm:px-4! sm:pt-16"
     >
       <div className="mx-auto max-w-7xl">
         <h2 className="max-w-3xl text-3xl leading-tight font-bold text-slate-900 sm:text-4xl lg:text-5xl">

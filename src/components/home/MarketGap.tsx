@@ -19,7 +19,7 @@ export function MarketGap() {
       ref={root}
       className="bg-kn-deep relative overflow-hidden py-20 lg:py-24"
     >
-      <div className="relative mx-auto max-w-7xl px-0 sm:px-4">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-4">
         <div className="max-w-2xl">
           <p className="text-sm font-medium tracking-[0.2em] text-slate-500 uppercase">
             The Market Gap

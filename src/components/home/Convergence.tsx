@@ -141,7 +141,7 @@ export function Convergence() {
   return (
     <section id="convergence" ref={section} className="bg-kn-deep relative">
       <div ref={pinWrap} className="flex h-svh flex-col py-16 md:justify-center md:gap-8 lg:gap-10 lg:py-20">
-        <div className="mx-auto mb-8 w-full max-w-7xl px-0 sm:px-4">
+        <div className="mx-auto mb-8 w-full max-w-7xl px-4 sm:px-4">
           <p className="text-blue-700 text-sm font-medium tracking-[0.2em] uppercase">
             The Great Convergence
           </p>

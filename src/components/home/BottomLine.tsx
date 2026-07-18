@@ -13,7 +13,7 @@ export function BottomLine() {
       ref={root}
       className="bg-kn-deep relative overflow-hidden py-14 lg:py-26"
     >
-      <div className="relative mx-auto max-w-4xl px-0 text-center sm:px-6 lg:px-12">
+      <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-12">
         <h2
           data-reveal-heading="true"
           className="mt-6 text-3xl leading-tight font-bold text-slate-900 sm:text-4xl lg:text-5xl"

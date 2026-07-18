@@ -28,7 +28,7 @@ export function Revolution() {
 
   return (
     <section id="revolution" ref={root} className="bg-kn-deep relative py-12 lg:py-28">
-      <div className="mx-auto max-w-7xl px-0 sm:px-4">
+      <div className="mx-auto max-w-7xl px-4 sm:px-4">
         <div className="grid items-center gap-16 lg:grid-cols-2">
           <div>
             <p className="text-blue-700 text-sm font-medium tracking-[0.2em] uppercase">
