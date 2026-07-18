@@ -14,7 +14,6 @@ export default function GlobalPage() {
       subtitle="Central banks, commodities, geopolitics and cross-border capital flows — through an Indian lens."
       breadcrumb="News / Global"
       articles={NEWS.global}
-      hrefPrefix="/news/global"
     />
   );
 }

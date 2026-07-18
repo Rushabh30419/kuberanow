@@ -60,7 +60,7 @@ export function EMICalculator() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-4">
         <ResultStat label="Monthly EMI" value={inr(emi)} accent />
         <ResultStat label="Total Interest" value={inr(totalInterest)} />
         <ResultStat label="Total Payment" value={inr(totalPayment)} />

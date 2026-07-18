@@ -55,10 +55,10 @@ export function ResultStat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
       <p className="text-xs text-slate-500">{label}</p>
       <p
-        className={`mt-1 text-2xl font-bold ${
+        className={`mt-1 break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${
           accent ? "text-blue-700" : "text-slate-900"
         }`}
       >

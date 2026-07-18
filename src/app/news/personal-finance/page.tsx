@@ -14,7 +14,6 @@ export default function PersonalFinancePage() {
       subtitle="Practical guidance on tax, savings, insurance, credit and investing — built for real-world decisions."
       breadcrumb="News / Personal Finance"
       articles={NEWS["personal-finance"]}
-      hrefPrefix="/news/personal-finance"
     />
   );
 }

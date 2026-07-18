@@ -14,7 +14,6 @@ export default function NationalPage() {
       subtitle="Policy, Parliament, governance and the political economy that moves markets."
       breadcrumb="News / National"
       articles={NEWS.national}
-      hrefPrefix="/news/national"
     />
   );
 }

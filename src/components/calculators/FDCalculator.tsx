@@ -52,7 +52,7 @@ export function FDCalculator() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-4">
         <ResultStat label="Principal" value={inr(principal)} />
         <ResultStat label="Total Interest" value={inr(interest)} />
         <ResultStat label="Maturity Value" value={inr(maturity)} accent />

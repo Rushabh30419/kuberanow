@@ -14,7 +14,6 @@ export default function GujaratPage() {
       subtitle="Business, industry and markets from across Gujarat — Surat, Ahmedabad, Vadodara, Rajkot and beyond."
       breadcrumb="News / Gujarat"
       articles={NEWS.gujarat}
-      hrefPrefix="/news/gujarat"
     />
   );
 }

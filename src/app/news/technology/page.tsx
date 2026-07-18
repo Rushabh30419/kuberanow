@@ -14,7 +14,6 @@ export default function TechnologyPage() {
       subtitle="Semiconductors, startups, telecom, AI and the digital economy — India's tech pulse."
       breadcrumb="News / Technology"
       articles={NEWS.technology}
-      hrefPrefix="/news/technology"
     />
   );
 }

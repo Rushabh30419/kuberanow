@@ -14,7 +14,6 @@ export default function EntertainmentPage() {
       subtitle="The business of entertainment — film, streaming, music, OTT and live events."
       breadcrumb="News / Entertainment"
       articles={NEWS.entertainment}
-      hrefPrefix="/news/entertainment"
     />
   );
 }

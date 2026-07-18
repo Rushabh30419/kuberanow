@@ -68,6 +68,12 @@
     #000ec0 48.38%,
     #000764 106.43%
   );
+
+  /* Shadows used across company/content pages (extracted from original) */
+  --shadow-contact-card: 0px 1px 1px 0px #4a20260a, 0px 1px 2px 0px #4a20260f;
+  --shadow-contact-promo: 0px 4px 14px #4a202614, 0px 1px 2px #4a20260a;
+  --shadow-content-panel: 0px 1px 1px 0px #4a20260a, 0px 1px 2px 0px #4a20260f;
+  --shadow-job-card-hover: 0px 2px 3px #0000001a;
 }
 
 :root {

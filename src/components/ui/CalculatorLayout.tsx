@@ -13,7 +13,7 @@ export function CalculatorLayout({ title, subtitle, children, formula }: Props) 
     <>
       <PageHeader title={title} subtitle={subtitle} breadcrumb="Tools" />
       <main className="bg-background-color mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-        <div className="grid gap-8 lg:grid-cols-2">{children}</div>
+        <div className="grid min-w-0 gap-8 lg:grid-cols-2">{children}</div>
 
         {formula && (
           <div className="mt-8 rounded-xl border border-slate-200 bg-white/60 p-5">

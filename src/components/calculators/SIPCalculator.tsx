@@ -66,7 +66,7 @@ export function SIPCalculator() {
 
       {/* Results */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4">
           <ResultStat label="Invested" value={inr(invested)} />
           <ResultStat label="Estimated Gains" value={inr(gains)} />
           <ResultStat label="Maturity Value" value={inr(maturity)} accent />

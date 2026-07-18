@@ -70,11 +70,13 @@ const GRADIENTS = [
   "bg-gradient-to-br from-indigo-500 to-blue-400",
 ];
 
+type ArticleSeed = { title: string; image: string };
+
 function makeArticles(
   category: string,
-  titles: string[]
+  seeds: ArticleSeed[]
 ): NewsArticle[] {
-  return titles.map((title, i) => ({
+  return seeds.map(({ title, image }, i) => ({
     slug: title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -87,64 +89,233 @@ function makeArticles(
     date: ["Jul 18, 2026", "Jul 17, 2026", "Jul 16, 2026"][i % 3],
     readTime: `${3 + (i % 5)} min read`,
     gradient: GRADIENTS[i % GRADIENTS.length],
+    image,
   }));
 }
 
 export const NEWS: Record<string, NewsArticle[]> = {
   india: makeArticles("Economy", [
-    "RBI Holds Repo Rate Steady at 6.5% Amid Inflation Concerns",
-    "India's GDP Growth Projected at 7.2% for FY 2026",
-    "GST Collections Hit Record ₹2.1 Lakh Crore in June Quarter",
-    "Manufacturing PMI Rises to 58.5 as Factory Output Expands",
-    "Foreign Portfolio Investors Pump ₹45,000 Cr Into Indian Equities",
-    "Government Announces ₹10 Lakh Cr Infrastructure Push",
+    {
+      title: "RBI Holds Repo Rate Steady at 6.5% Amid Inflation Concerns",
+      image:
+        "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "India's GDP Growth Projected at 7.2% for FY 2026",
+      image:
+        "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "GST Collections Hit Record ₹2.1 Lakh Crore in June Quarter",
+      image:
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Manufacturing PMI Rises to 58.5 as Factory Output Expands",
+      image:
+        "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Foreign Portfolio Investors Pump ₹45,000 Cr Into Indian Equities",
+      image:
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Government Announces ₹10 Lakh Cr Infrastructure Push",
+      image:
+        "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   "personal-finance": makeArticles("Personal Finance", [
-    "How New Tax Regime Changes Impact Salaried Taxpayers in FY26",
-    "SIP vs Lump Sum: Where to Invest During Market Highs",
-    "Credit Card Debt at All-Time High: RBI Issues Fresh Warning",
-    "5 High-Yield Savings Account Options in July 2026",
-    "Why Term Insurance Should Be Your First Financial Decision",
-    "Step-by-Step Guide to Filing ITR for Capital Gains This Year",
+    {
+      title: "How New Tax Regime Changes Impact Salaried Taxpayers in FY26",
+      image:
+        "https://images.unsplash.com/photo-1554224155-1696413565d3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "SIP vs Lump Sum: Where to Invest During Market Highs",
+      image:
+        "https://images.unsplash.com/photo-1579621970795-87facc2f976d?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Credit Card Debt at All-Time High: RBI Issues Fresh Warning",
+      image:
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "5 High-Yield Savings Account Options in July 2026",
+      image:
+        "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Why Term Insurance Should Be Your First Financial Decision",
+      image:
+        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Step-by-Step Guide to Filing ITR for Capital Gains This Year",
+      image:
+        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   technology: makeArticles("Technology", [
-    "India's Semiconductor Mission: First Fab Plant Operational in Gujarat",
-    "Reliance Jio Launches 6G Pilot in Mumbai and Ahmedabad",
-    "TCS Reports 12% Jump in Net Profit on AI Demand",
-    "Startups Raise $4.2 Billion in Q2 2026 Funding Round",
-    "Government Finalizes Digital Personal Data Protection Rules",
-    "India Crosses 900 Million Internet Users, Says TRAI Report",
+    {
+      title: "India's Semiconductor Mission: First Fab Plant Operational in Gujarat",
+      image:
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Reliance Jio Launches 6G Pilot in Mumbai and Ahmedabad",
+      image:
+        "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "TCS Reports 12% Jump in Net Profit on AI Demand",
+      image:
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Startups Raise $4.2 Billion in Q2 2026 Funding Round",
+      image:
+        "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Government Finalizes Digital Personal Data Protection Rules",
+      image:
+        "https://images.unsplash.com/photo-1551434678-e076c223a692?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "India Crosses 900 Million Internet Users, Says TRAI Report",
+      image:
+        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   gujarat: makeArticles("Gujarat", [
-    "Surat Becomes India's Fastest-Growing City for New Startups",
-    "Vibrant Gujarat 2026: ₹35 Lakh Crore in MoUs Signed",
-    "Ahmedabad Real Estate Sees 28% Price Jump in Premium Segment",
-    "GIFT City Attracts 50 New Financial Firms This Quarter",
-    "Gujarat's Diamond Polishing Industry Bounces Back Post Slowdown",
-    "Tata Motors Sanand Plant Hits Record EV Production Milestone",
+    {
+      title: "Surat Becomes India's Fastest-Growing City for New Startups",
+      image:
+        "https://images.unsplash.com/photo-1577234285295-5b9f8263c3d3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Vibrant Gujarat 2026: ₹35 Lakh Crore in MoUs Signed",
+      image:
+        "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Ahmedabad Real Estate Sees 28% Price Jump in Premium Segment",
+      image:
+        "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "GIFT City Attracts 50 New Financial Firms This Quarter",
+      image:
+        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Gujarat's Diamond Polishing Industry Bounces Back Post Slowdown",
+      image:
+        "https://images.unsplash.com/photo-1606800052052-a08af7148866?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Tata Motors Sanand Plant Hits Record EV Production Milestone",
+      image:
+        "https://images.unsplash.com/photo-1593941707882-a5bba14938be?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   national: makeArticles("National", [
-    "Parliament Passes Key Banking Amendment Bill Unanimously",
-    "Monsoon Session: Centre to Table New Competition Law",
-    "Supreme Court Upholds Constitutional Validity of Digital Tax",
-    "Cabinet Approves National Manufacturing Mission",
-    "India Successfully Test-Fires Agni-V Missile with New Tech",
-    "PM Inaugurates 12 New Vande Bharat Express Trains Nationwide",
+    {
+      title: "Parliament Passes Key Banking Amendment Bill Unanimously",
+      image:
+        "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Monsoon Session: Centre to Table New Competition Law",
+      image:
+        "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Supreme Court Upholds Constitutional Validity of Digital Tax",
+      image:
+        "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Cabinet Approves National Manufacturing Mission",
+      image:
+        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "India Successfully Test-Fires Agni-V Missile with New Tech",
+      image:
+        "https://images.unsplash.com/photo-1551845728-6820a30c64ab?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "PM Inaugurates 12 New Vande Bharat Express Trains Nationwide",
+      image:
+        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   global: makeArticles("Global", [
-    "US Federal Reserve Signals Possible Rate Cut in September",
-    "Oil Prices Surge as OPEC+ Extends Production Cuts",
-    "China's Economic Slowdown Deepens: Q2 Growth at 4.7%",
-    "EU Implements Landmark AI Act, Sets Global Benchmark",
-    "Japan Intervenes in Currency Markets as Yen Hits 38-Year Low",
-    "Global Tech Stocks Rally on Strong Earnings from AI Giants",
+    {
+      title: "US Federal Reserve Signals Possible Rate Cut in September",
+      image:
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Oil Prices Surge as OPEC+ Extends Production Cuts",
+      image:
+        "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "China's Economic Slowdown Deepens: Q2 Growth at 4.7%",
+      image:
+        "https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "EU Implements Landmark AI Act, Sets Global Benchmark",
+      image:
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Japan Intervenes in Currency Markets as Yen Hits 38-Year Low",
+      image:
+        "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Global Tech Stocks Rally on Strong Earnings from AI Giants",
+      image:
+        "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
   entertainment: makeArticles("Entertainment", [
-    "Box Office Record: Gujarati Film Crosses ₹100 Cr Milestone",
-    "Streaming Wars: New Regional Platforms Launch This Quarter",
-    "Music Industry Revenue Hits ₹3,000 Cr in FY26",
-    "Bollywood-OTT Crossover Deals Reach All-Time High",
-    "Gujarat International Film Festival Announces 2026 Lineup",
-    "Live Events Sector Bounces Back with Record Concert Bookings",
+    {
+      title: "Box Office Record: Gujarati Film Crosses ₹100 Cr Milestone",
+      image:
+        "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Streaming Wars: New Regional Platforms Launch This Quarter",
+      image:
+        "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Music Industry Revenue Hits ₹3,000 Cr in FY26",
+      image:
+        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Bollywood-OTT Crossover Deals Reach All-Time High",
+      image:
+        "https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Gujarat International Film Festival Announces 2026 Lineup",
+      image:
+        "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=640&h=360&fit=crop&auto=format&q=80",
+    },
+    {
+      title: "Live Events Sector Bounces Back with Record Concert Bookings",
+      image:
+        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=640&h=360&fit=crop&auto=format&q=80",
+    },
   ]),
 };

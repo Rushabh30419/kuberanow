@@ -14,7 +14,6 @@ export default function EconomyNewsPage() {
       subtitle="Macro indicators, policy moves and the economic forces shaping India's growth story."
       breadcrumb="News / Economy"
       articles={NEWS.india}
-      hrefPrefix="/news/india"
     />
   );
 }
