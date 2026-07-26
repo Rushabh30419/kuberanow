@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { prisma } from "./db";
 import { currentUser } from "./auth-guard";
 import { getAuthorizedUser } from "./auth-action";
 import type { CalculationType } from "./types";
 import { PERMISSION_KEYS } from "./permissions";
+import { connectObs, disconnectObs, getObsStatus } from "./live";
 
 const NOT_AUTHORIZED = { ok: false as const, error: "Not authorized." };
 
@@ -41,13 +44,58 @@ export async function applyForJob(formData: FormData) {
   if (!jobId || !name || !email) {
     return { ok: false, error: "Job, name, and email are required." };
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
 
-  await prisma.application.create({
+  // Validate and persist the resume file (if provided).
+  const resume = formData.get("resume");
+  let resumePath: string | null = null;
+  let resumeName: string | null = null;
+  let resumeSize: number | null = null;
+  let resumeMime: string | null = null;
+
+  if (resume && resume instanceof File && resume.size > 0) {
+    const allowed = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const ext = resume.name.toLowerCase().split(".").pop() ?? "";
+    const allowedExt = ["pdf", "doc", "docx"];
+    if (!allowed.includes(resume.type) && !allowedExt.includes(ext)) {
+      return { ok: false, error: "Resume must be a PDF, DOC, or DOCX file." };
+    }
+    if (resume.size > 5 * 1024 * 1024) {
+      return { ok: false, error: "Resume must be 5 MB or smaller." };
+    }
+    resumeSize = resume.size;
+    resumeMime = resume.type || `application/${ext === "pdf" ? "pdf" : "octet-stream"}`;
+    resumeName = resume.name;
+  }
+
+  // Create the application first so we have a stable id for the file path.
+  const application = await prisma.application.create({
     data: { jobId, userId: user?.id, name, email, phone, coverLetter },
   });
+
+  if (resume && resume instanceof File && resume.size > 0) {
+    const safeName = (resume.name || "resume").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const dir = path.join(process.cwd(), "public", "uploads", "applications", application.id);
+    await fs.mkdir(dir, { recursive: true });
+    const filePath = path.join(dir, safeName);
+    const buffer = Buffer.from(await resume.arrayBuffer());
+    await fs.writeFile(filePath, buffer);
+    resumePath = `/uploads/applications/${application.id}/${safeName}`;
+    await prisma.application.update({
+      where: { id: application.id },
+      data: { resumePath, resumeName, resumeSize, resumeMime },
+    });
+  }
+
   revalidatePath("/admin/applications");
   revalidatePath("/dashboard");
-  return { ok: true };
+  return { ok: true, id: application.id };
 }
 
 // ─── User-scoped: Saved calculations ─────────────────────────────────────
@@ -172,6 +220,9 @@ export async function upsertJob(formData: FormData) {
   const active = formData.get("active") === "on";
 
   if (!title) return { ok: false, error: "Title is required." };
+  if (!location) return { ok: false, error: "Location is required." };
+  if (!description) return { ok: false, error: "Description is required." };
+  if (title.length > 120) return { ok: false, error: "Title must be 120 characters or fewer." };
 
   const data = { title, description, experience, salary, location, type, mode, active };
   if (id) {
@@ -183,6 +234,17 @@ export async function upsertJob(formData: FormData) {
   revalidatePath("/admin/jobs");
   revalidatePath("/career");
   return { ok: true };
+}
+
+export async function toggleJobActive(id: string) {
+  const user = await getAuthorizedUser("jobs.edit");
+  if (!user) return NOT_AUTHORIZED;
+  const job = await prisma.job.findUnique({ where: { id }, select: { active: true, title: true } });
+  if (!job) return { ok: false, error: "Job not found." };
+  await prisma.job.update({ where: { id }, data: { active: !job.active } });
+  revalidatePath("/admin/jobs");
+  revalidatePath("/career");
+  return { ok: true, active: !job.active, title: job.title };
 }
 
 export async function deleteJob(id: string) {
@@ -262,12 +324,82 @@ export async function deleteApplication(id: string) {
   return { ok: true };
 }
 
+export async function markApplicationRead(id: string) {
+  const user = await getAuthorizedUser("applications.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.application.update({
+    where: { id },
+    data: { read: true, readAt: new Date() },
+  });
+  revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${id}`);
+  return { ok: true };
+}
+
+export async function markApplicationUnread(id: string) {
+  const user = await getAuthorizedUser("applications.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.application.update({
+    where: { id },
+    data: { read: false, readAt: null },
+  });
+  revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${id}`);
+  return { ok: true };
+}
+
+export async function markAllApplicationRead() {
+  const user = await getAuthorizedUser("applications.view");
+  if (!user) return NOT_AUTHORIZED;
+  const result = await prisma.application.updateMany({
+    where: { read: false },
+    data: { read: true, readAt: new Date() },
+  });
+  revalidatePath("/admin/applications");
+  return { ok: true, count: result.count };
+}
+
 export async function deleteContactSubmission(id: string) {
   const user = await getAuthorizedUser("contact.view");
   if (!user) return NOT_AUTHORIZED;
   await prisma.contactSubmission.delete({ where: { id } });
   revalidatePath("/admin/contact");
   return { ok: true };
+}
+
+export async function markContactRead(id: string) {
+  const user = await getAuthorizedUser("contact.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.contactSubmission.update({
+    where: { id },
+    data: { read: true, readAt: new Date() },
+  });
+  revalidatePath("/admin/contact");
+  revalidatePath(`/admin/contact/${id}`);
+  return { ok: true };
+}
+
+export async function markContactUnread(id: string) {
+  const user = await getAuthorizedUser("contact.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.contactSubmission.update({
+    where: { id },
+    data: { read: false, readAt: null },
+  });
+  revalidatePath("/admin/contact");
+  revalidatePath(`/admin/contact/${id}`);
+  return { ok: true };
+}
+
+export async function markAllContactRead() {
+  const user = await getAuthorizedUser("contact.view");
+  if (!user) return NOT_AUTHORIZED;
+  const result = await prisma.contactSubmission.updateMany({
+    where: { read: false },
+    data: { read: true, readAt: new Date() },
+  });
+  revalidatePath("/admin/contact");
+  return { ok: true, count: result.count };
 }
 
 // ─── Admin: Users ────────────────────────────────────────────────────────
@@ -445,5 +577,166 @@ export async function updateSiteSettings(jsonData: string) {
   });
   revalidatePath("/admin/settings");
   revalidatePath("/contact");
+  return { ok: true };
+}
+
+// ─── Admin: Live streaming ───────────────────────────────────────────────
+
+/** Ensure the singleton LiveStream row exists, returning it. */
+async function getOrCreateLiveStream() {
+  return prisma.liveStream.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
+}
+
+export async function updateLiveConfig(formData: FormData) {
+  const user = await getAuthorizedUser("live.edit");
+  if (!user) return NOT_AUTHORIZED;
+
+  const title = String(formData.get("title") ?? "").trim() || "KuberaNow Live";
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const obsHost = String(formData.get("obsHost") ?? "").trim() || null;
+  const obsPort = Number(formData.get("obsPort") ?? 0) || null;
+  const obsPassword = String(formData.get("obsPassword") ?? "") || null;
+  const rtmpUrl = String(formData.get("rtmpUrl") ?? "").trim() || null;
+  const rtmpKey = String(formData.get("rtmpKey") ?? "").trim() || null;
+  const hlsUrl = String(formData.get("hlsUrl") ?? "").trim() || null;
+  const recordingEnabled = formData.get("recordingEnabled") === "on";
+
+  await prisma.liveStream.upsert({
+    where: { id: "singleton" },
+    update: {
+      title,
+      description,
+      obsHost,
+      obsPort,
+      obsPassword,
+      rtmpUrl,
+      rtmpKey,
+      hlsUrl,
+      recordingEnabled,
+    },
+    create: {
+      id: "singleton",
+      title,
+      description,
+      obsHost,
+      obsPort,
+      obsPassword,
+      rtmpUrl,
+      rtmpKey,
+      hlsUrl,
+      recordingEnabled,
+    },
+  });
+  revalidatePath("/admin/live");
+  revalidatePath("/live");
+  return { ok: true };
+}
+
+export async function goLive() {
+  const user = await getAuthorizedUser("live.start");
+  if (!user) return NOT_AUTHORIZED;
+
+  const stream = await getOrCreateLiveStream();
+  if (!stream.hlsUrl) {
+    return { ok: false, error: "Set a public HLS playback URL in the control panel before going live." };
+  }
+
+  const session = await prisma.liveStreamSession.create({
+    data: { title: stream.title },
+  });
+
+  await prisma.liveStream.update({
+    where: { id: "singleton" },
+    data: {
+      status: "live",
+      startedAt: new Date(),
+      endedAt: null,
+    },
+  });
+  revalidatePath("/admin/live");
+  revalidatePath("/live");
+  return { ok: true, sessionId: session.id };
+}
+
+export async function endLive() {
+  const user = await getAuthorizedUser("live.start");
+  if (!user) return NOT_AUTHORIZED;
+
+  // Close the latest open session
+  const open = await prisma.liveStreamSession.findFirst({
+    where: { endedAt: null },
+    orderBy: { startedAt: "desc" },
+  });
+  if (open) {
+    await prisma.liveStreamSession.update({
+      where: { id: open.id },
+      data: { endedAt: new Date() },
+    });
+  }
+
+  await prisma.liveStream.update({
+    where: { id: "singleton" },
+    data: { status: "offline", endedAt: new Date() },
+  });
+  revalidatePath("/admin/live");
+  revalidatePath("/live");
+  return { ok: true };
+}
+
+export async function testObsConnection() {
+  const user = await getAuthorizedUser("live.edit");
+  if (!user) return NOT_AUTHORIZED;
+
+  const stream = await getOrCreateLiveStream();
+  if (!stream.obsHost) {
+    return { ok: false, error: "OBS host is not configured." };
+  }
+  const result = await connectObs({
+    host: stream.obsHost,
+    port: stream.obsPort ?? 4455,
+    password: stream.obsPassword ?? undefined,
+  });
+  if (result.ok) {
+    await prisma.liveStream.update({
+      where: { id: "singleton" },
+      data: { obsConnected: true, obsScene: result.scene ?? null },
+    });
+  } else {
+    await prisma.liveStream.update({
+      where: { id: "singleton" },
+      data: { obsConnected: false, obsScene: null },
+    });
+  }
+  revalidatePath("/admin/live");
+  return result;
+}
+
+export async function refreshObsStatus() {
+  const user = await getAuthorizedUser("live.view");
+  if (!user) return NOT_AUTHORIZED;
+  const status = await getObsStatus();
+  if (status.connected !== undefined) {
+    await prisma.liveStream.update({
+      where: { id: "singleton" },
+      data: { obsConnected: status.connected, obsScene: status.scene ?? null },
+    });
+  }
+  revalidatePath("/admin/live");
+  return status;
+}
+
+export async function disconnectObsAction() {
+  const user = await getAuthorizedUser("live.edit");
+  if (!user) return NOT_AUTHORIZED;
+  await disconnectObs();
+  await prisma.liveStream.update({
+    where: { id: "singleton" },
+    data: { obsConnected: false, obsScene: null },
+  });
+  revalidatePath("/admin/live");
   return { ok: true };
 }

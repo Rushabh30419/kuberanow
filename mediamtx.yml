@@ -1,0 +1,48 @@
+# MediaMTX configuration for the local KuberaNow RTMP ingester.
+#
+# Defaults shown in the admin control panel (/admin/live) match this file:
+#   RTMP ingest URL : rtmp://localhost:1935/live
+#   Stream key      : kubera
+#   HLS playback URL: http://localhost:8888/live/kubera/index.m3u8
+#
+# Re-run with:
+#   docker compose up -d mediamtx
+
+logLevel: info
+
+# Allow any user to publish, read, and query the API without a password.
+# The control API is only used by the admin control panel to render the
+# "OBS ingest" status pill; tighten this if you ever expose the API beyond
+# localhost.
+authMethod: internal
+authInternalUsers:
+  - user: any
+    pass:
+    permissions:
+      - action: publish
+      - action: read
+      - action: playback
+      - action: api
+      - action: metrics
+
+# Local control API (status, list of active streams).
+api: true
+apiAddress: 0.0.0.0:9997
+apiEncryption: false
+apiAllowOrigins: ["*"]
+
+# HLS playback for the public /live page.
+hlsAddress: 0.0.0.0:8888
+hlsAlwaysRemux: yes
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsDirectory: /tmp/hls
+
+# RTMP ingest for OBS Studio.
+rtmpAddress: 0.0.0.0:1935
+rtmpEncryption: "no"
+
+# Match every path so any stream key dropped in OBS works.
+paths:
+  all:

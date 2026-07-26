@@ -4,16 +4,7 @@ import { useState, useTransition } from "react";
 import { Check, Save, Trash2 } from "lucide-react";
 import { updateMarketQuote, deleteMarketQuote } from "@/lib/actions";
 
-type Quote = {
-  id: string;
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  volume: string | null;
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   index: "Indices",
   stock: "Stocks",
   mutual_fund: "Mutual Funds",
@@ -22,51 +13,44 @@ const CATEGORY_LABELS: Record<string, string> = {
   crypto: "Crypto",
 };
 
-type Props = {
-  byCategory: Record<string, Quote[]>;
-  canEdit: boolean;
+export type Quote = {
+  id: string;
+  category: string;
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  volume: string | null;
 };
 
-export default function MarketEditor({ byCategory, canEdit }: Props) {
-  const categories = Object.keys(byCategory);
-  const [active, setActive] = useState(categories[0] ?? "index");
+type Props = {
+  quotes: Quote[];
+  canEdit: boolean;
+  page: number;
+  pageCount: number;
+};
+
+export default function MarketTable({ quotes, canEdit, page, pageCount }: Props) {
   const [pending, start] = useTransition();
   const [savedId, setSavedId] = useState<string | null>(null);
 
   return (
-    <div>
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-slate-200">
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setActive(c)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors ${
-              active === c
-                ? "border-primary-navy text-primary-navy"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            {CATEGORY_LABELS[c] ?? c}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-500 uppercase">
             <tr>
-              <th className="px-3 py-2 text-left">Symbol</th>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-right">Price</th>
-              <th className="px-3 py-2 text-right">Change %</th>
-              <th className="px-3 py-2 text-left">Volume</th>
-              <th className="px-3 py-2"></th>
-              {canEdit && <th className="px-3 py-2"></th>}
+              <th className="px-3 py-3 text-left">Category</th>
+              <th className="px-3 py-3 text-left">Symbol</th>
+              <th className="px-3 py-3 text-left">Name</th>
+              <th className="px-3 py-3 text-right">Price</th>
+              <th className="px-3 py-3 text-right">Change %</th>
+              <th className="px-3 py-3 text-left">Volume</th>
+              {canEdit && <th className="px-3 py-3"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {(byCategory[active] ?? []).map((q) => (
+            {quotes.map((q) => (
               <QuoteRow
                 key={q.id}
                 quote={q}
@@ -94,6 +78,15 @@ export default function MarketEditor({ byCategory, canEdit }: Props) {
           </tbody>
         </table>
       </div>
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+          <span>
+            Page <span className="font-semibold text-slate-700">{page}</span> of {pageCount}
+          </span>
+          <span>Use the filters above to change pages.</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -119,6 +112,11 @@ function QuoteRow({
 
   return (
     <tr>
+      <td className="px-3 py-2 text-slate-600">
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+          {CATEGORY_LABELS[quote.category] ?? quote.category}
+        </span>
+      </td>
       <td className="px-3 py-2 font-mono font-semibold text-career-heading">{quote.symbol}</td>
       <td className="px-3 py-2 text-slate-600">{quote.name}</td>
       <td className="px-3 py-2 text-right">
@@ -148,33 +146,33 @@ function QuoteRow({
           className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-primary-navy focus:outline-none"
         />
       </td>
-      <td className="px-3 py-2 text-right">
-        {saved ? (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-            <Check className="size-3.5" /> Saved
-          </span>
-        ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => onSave(Number(price), Number(change), volume || undefined)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline disabled:opacity-60"
-          >
-            <Save className="size-3.5" /> Save
-          </button>
-        )}
-      </td>
       {canEdit && (
         <td className="px-3 py-2 text-right">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onDelete}
-            aria-label={`Delete ${quote.symbol}`}
-            className="inline-flex items-center justify-center rounded-md p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-60"
-          >
-            <Trash2 className="size-4" />
-          </button>
+          <div className="flex items-center justify-end gap-3 text-xs font-semibold">
+            {saved ? (
+              <span className="inline-flex items-center gap-1 text-emerald-700">
+                <Check className="size-3.5" /> Saved
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => onSave(Number(price), Number(change), volume || undefined)}
+                className="inline-flex items-center gap-1 text-blue-700 hover:underline disabled:opacity-60"
+              >
+                <Save className="size-3.5" /> Save
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={pending}
+              onClick={onDelete}
+              aria-label={`Delete ${quote.symbol}`}
+              className="inline-flex items-center gap-1 text-red-600 hover:bg-red-50 disabled:opacity-60"
+            >
+              <Trash2 className="size-3.5" /> Delete
+            </button>
+          </div>
         </td>
       )}
     </tr>

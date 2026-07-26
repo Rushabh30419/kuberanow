@@ -13,8 +13,30 @@ services:
       AUTH_SECRET: "kuberanow-dev-secret-please-change-in-production-9f8e7d"
       AUTH_TRUST_HOST: "true"
       NODE_ENV: "production"
+      # Where the Next.js app expects to find the local RTMP ingester.
+      # The control panel at /admin/live renders these by default.
+      LIVE_RTMP_URL: "rtmp://localhost:1935/live"
+      LIVE_RTMP_KEY: "kubera"
+      LIVE_HLS_URL: "http://localhost:8888/live/kubera/index.m3u8"
     volumes:
       - kuberanow-data:/app/data
+    restart: unless-stopped
+
+  # Local RTMP ingester + HLS re-packager.
+  # OBS connects here (rtmp://localhost:1935/live) and the public /live
+  # page plays back from this container's HLS endpoint.
+  # Run with:  docker compose up -d mediamtx
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: kuberanow-mediamtx
+    ports:
+      - "1935:1935"   # RTMP ingest from OBS
+      - "8888:8888"   # HLS playback for the public /live page
+      - "8890:8890"   # SRT ingest (optional)
+      - "8554:8554"   # RTSP ingest (optional)
+      - "9997:9997"   # MediaMTX API + metrics
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
     restart: unless-stopped
 
 volumes:

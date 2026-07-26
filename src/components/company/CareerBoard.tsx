@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useSession } from "next-auth/react";
-import { applyForJob } from "@/lib/actions";
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export type Job = {
   id: string;
@@ -94,14 +94,8 @@ export function CareerBoard({ jobs }: { jobs: Job[] }) {
 }
 
 function JobCard({ job }: { job: Job }) {
-  const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
-  const [pending, start] = useTransition();
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   return (
-    <article className="job-card border-career-stroke hover:shadow-job-card-hover flex h-fit w-full cursor-pointer flex-col rounded-lg border p-4 transition-shadow md:max-w-72.5">
+    <article className="job-card border-career-stroke hover:shadow-job-card-hover flex h-fit w-full flex-col rounded-lg border p-4 transition-shadow md:max-w-72.5">
       <div className="border-career-stroke flex w-full flex-col gap-1 border-b pb-1">
         <h3 className="text-career-dark flex min-h-11 items-center text-lg leading-5.5 font-bold text-pretty">
           {job.title}
@@ -131,62 +125,14 @@ function JobCard({ job }: { job: Job }) {
               {job.mode}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setOpen((v) => !v);
-              setDone(false);
-              setError(null);
-            }}
+          <Link
+            href={`/career/${job.id}`}
             className="text-primary inline-flex shrink-0 cursor-pointer items-center gap-1 rounded text-sm leading-4.5 font-semibold hover:underline"
           >
             Apply
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </button>
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
-
-        {open && (
-          <div className="border-career-stroke bg-career-tint mt-2 rounded border p-3">
-            {done ? (
-              <p className="text-sm font-semibold text-green-700">
-                ✓ Application submitted. We&apos;ll be in touch.
-              </p>
-            ) : (
-              <form
-                action={(fd) =>
-                  start(async () => {
-                    setError(null);
-                    fd.set("jobId", job.id);
-                    const res = await applyForJob(fd);
-                    if (res.ok) setDone(true);
-                    else setError(res.error ?? "Submission failed.");
-                  })
-                }
-                className="flex flex-col gap-2"
-              >
-                <input name="name" placeholder="Full name" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" defaultValue={session?.user?.name ?? ""} required />
-                <input name="email" type="email" placeholder="Email" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" defaultValue={session?.user?.email ?? ""} required />
-                <input name="phone" placeholder="Phone (optional)" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" />
-                <textarea name="coverLetter" placeholder="Brief cover note (optional)" rows={2} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" />
-                {error && <p className="text-xs text-red-700">{error}</p>}
-                {!session && (
-                  <p className="text-[10px] text-slate-500">
-                    <a href="/login?callbackUrl=/career" className="text-blue-700 hover:underline">Sign in</a> to track this application.
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="bg-primary hover:bg-dark-navy1 w-full rounded px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
-                >
-                  {pending ? "Submitting…" : "Submit application"}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
       </div>
     </article>
   );

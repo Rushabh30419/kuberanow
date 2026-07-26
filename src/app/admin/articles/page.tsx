@@ -1,36 +1,123 @@
 import Link from "next/link";
-import { PlusCircle, Pencil } from "lucide-react";
+import type { Prisma } from "@prisma/client";
+import { PlusCircle, Pencil, FileText } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth-guard";
 import { getUserPermissions } from "@/lib/data-access";
 import { deleteArticle } from "@/lib/actions";
-import { parsePage, PAGE_SIZE } from "@/lib/pagination";
-import { PageHeader, ButtonLink, DataTable, Badge, type Column } from "@/components/admin/ui";
+import {
+  PAGE_SIZE,
+  buildListHref,
+  clampPage,
+  parseChoice,
+  parsePage,
+  parseParam,
+} from "@/lib/pagination";
+import {
+  PageHeader,
+  ButtonLink,
+  DataTable,
+  Badge,
+  EmptyState,
+  type Column,
+} from "@/components/admin/ui";
 import { Pagination } from "@/components/admin/Pagination";
+import { DataTableToolbar, type TableSort } from "@/components/admin/DataTableToolbar";
 import DeleteButton from "../DeleteButton";
+
+const STATUS_OPTIONS = ["", "draft", "published"] as const;
+type StatusValue = (typeof STATUS_OPTIONS)[number];
+
+const SORT_OPTIONS: readonly TableSort[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "updated", label: "Recently updated" },
+  { value: "title_asc", label: "Title A–Z" },
+  { value: "title_desc", label: "Title Z–A" },
+] as const;
+
+const SORT_DEFAULT = "newest";
+type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+
+function buildOrderBy(sort: SortValue): Prisma.ArticleOrderByWithRelationInput {
+  switch (sort) {
+    case "oldest":
+      return { createdAt: "asc" };
+    case "updated":
+      return { updatedAt: "desc" };
+    case "title_asc":
+      return { title: "asc" };
+    case "title_desc":
+      return { title: "desc" };
+    case "newest":
+    default:
+      return { createdAt: "desc" };
+  }
+}
+
+const PATH = "/admin/articles";
 
 export default async function ArticlesList({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requirePermission("articles.view");
   const perms = await getUserPermissions(user.id);
-  const { page: pageStr } = await searchParams;
-  const page = parsePage(pageStr);
-  const skip = (page - 1) * PAGE_SIZE;
+  const sp = await searchParams;
 
-  const [articles, total] = await Promise.all([
+  const q = parseParam(sp.q);
+  const status = parseChoice<StatusValue>(sp.status, STATUS_OPTIONS, "");
+  const categoryId = parseParam(sp.categoryId);
+  const sort = parseChoice<SortValue>(sp.sort, SORT_OPTIONS.map((o) => o.value), SORT_DEFAULT);
+  const requestedPage = parsePage(sp.page);
+  const orderBy = buildOrderBy(sort);
+
+  const where: Prisma.ArticleWhereInput = {
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q } },
+            { slug: { contains: q } },
+            { excerpt: { contains: q } },
+            { author: { contains: q } },
+          ],
+        }
+      : {}),
+    ...(status ? { status } : {}),
+    ...(categoryId ? { categoryId } : {}),
+  };
+
+  const [articles, total, categories, publishedCount] = await Promise.all([
     prisma.article.findMany({
-      orderBy: { createdAt: "desc" },
+      where,
+      orderBy,
       include: { category: true },
-      skip,
       take: PAGE_SIZE,
+      skip: (requestedPage - 1) * PAGE_SIZE,
     }),
-    prisma.article.count(),
+    prisma.article.count({ where }),
+    prisma.category.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.article.count({ where: { status: "published" } }),
   ]);
 
-  const columns: Column<(typeof articles)[number]>[] = [
+  const page = clampPage(requestedPage, total);
+
+  // Re-fetch the clamped page if the requested page was out of range.
+  const rows =
+    page === requestedPage
+      ? articles
+      : await prisma.article.findMany({
+          where,
+          orderBy,
+          include: { category: true },
+          take: PAGE_SIZE,
+          skip: (page - 1) * PAGE_SIZE,
+        });
+
+  const hasFilters = Boolean(q || status || categoryId || sort !== SORT_DEFAULT);
+
+  const columns: Column<(typeof rows)[number]>[] = [
     {
       key: "title",
       header: "Title",
@@ -72,23 +159,80 @@ export default async function ArticlesList({
     },
   ];
 
+  const params = { q, status, categoryId, sort };
+
   return (
     <div>
       <PageHeader
         title="Articles"
-        subtitle={`${total} total`}
+        subtitle={`${publishedCount} published · ${total} matching`}
         actions={
           perms.includes("articles.create") && (
             <ButtonLink href="/admin/articles/new" icon={PlusCircle}>New article</ButtonLink>
           )
         }
       />
-      <DataTable columns={columns} rows={articles} rowKey={(a) => a.id} />
+
+      <DataTableToolbar
+        action={PATH}
+        search={q}
+        searchPlaceholder="Search title, author, or excerpt..."
+        filters={[
+          {
+            name: "status",
+            label: "Status",
+            value: status,
+            options: [
+              { value: "", label: "All statuses" },
+              { value: "draft", label: "Draft" },
+              { value: "published", label: "Published" },
+            ],
+          },
+          {
+            name: "categoryId",
+            label: "Category",
+            value: categoryId,
+            options: [
+              { value: "", label: "All categories" },
+              ...categories.map((c) => ({ value: c.id, label: c.name })),
+            ],
+          },
+        ]}
+        sort={sort}
+        defaultSort={SORT_DEFAULT}
+        sortOptions={[...SORT_OPTIONS]}
+        resultCount={total}
+      />
+
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(a) => a.id}
+        empty={
+          hasFilters ? (
+            <EmptyState
+              icon={FileText}
+              title="No articles match these filters"
+              description="Try clearing the search or changing the status/category."
+              action={
+                <Link
+                  href={PATH}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Clear filters
+                </Link>
+              }
+            />
+          ) : (
+            <EmptyState icon={FileText} title="No articles yet" description="Create your first article to get started." />
+          )
+        }
+      />
       <Pagination
         page={page}
         total={total}
         pageSize={PAGE_SIZE}
-        hrefFor={(p) => `/admin/articles?page=${p}`}
+        hrefFor={(p) => buildListHref(PATH, params, p)}
       />
     </div>
   );

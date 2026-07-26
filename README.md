@@ -29,6 +29,31 @@ docker compose down           # stop (keeps data volume)
 docker compose down -v        # stop AND wipe the database
 ```
 
+### Live streaming (optional)
+
+The admin console ships with a one-click **Live** control panel that connects
+OBS Studio to a local RTMP ingester (MediaMTX) so you can broadcast without
+setting up a CDN.
+
+```bash
+docker compose up -d mediamtx      # start the local RTMP + HLS server
+```
+
+Then in OBS Studio:
+
+* **Settings → Stream → Service:** `Custom…`
+* **Server:** `rtmp://localhost:1935/live`
+* **Stream key:** `kubera`
+
+Open `/admin/live` and the **OBS ingest** card shows the same URL and key
+with one-click copy buttons. Press **Start Streaming** in OBS, then click
+**Go live** in the control panel — the public `/live` page will start
+playing the broadcast over HLS.
+
+For production, replace the local URL/key with your CDN's (Cloudflare Stream,
+AWS IVS, Mux, Brightcove) by editing the **Stream configuration** form on
+the same page.
+
 ### Option B — local dev (no Docker)
 
 ```bash

@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Radio,
 } from "lucide-react";
 import { LogoutButton } from "./LogoutButton";
 
@@ -50,6 +51,12 @@ const NAV: NavSection[] = [
     items: [
       { href: "/admin/applications", label: "Applications", icon: Inbox, permission: "applications.view" },
       { href: "/admin/contact", label: "Messages", icon: Mail, permission: "contact.view" },
+    ],
+  },
+  {
+    heading: "Live",
+    items: [
+      { href: "/admin/live", label: "Live control panel", icon: Radio, permission: "live.view" },
     ],
   },
   {

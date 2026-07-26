@@ -55,6 +55,11 @@ export const PERMISSIONS: PermissionDef[] = [
   // Settings
   { key: "settings.view", label: "View settings", description: "See site settings", category: "Settings" },
   { key: "settings.edit", label: "Edit settings", description: "Update site-wide settings", category: "Settings" },
+
+  // Live streaming
+  { key: "live.view", label: "View live control panel", description: "See the live streaming control panel", category: "Live streaming" },
+  { key: "live.edit", label: "Edit live settings", description: "Update stream title, RTMP/HLS URLs, OBS connection", category: "Live streaming" },
+  { key: "live.start", label: "Start / stop stream", description: "Go live and end the broadcast", category: "Live streaming" },
 ];
 
 /** All keys, as a Set for O(1) lookups. */
@@ -86,4 +91,6 @@ export const EDITOR_PERMISSIONS = [
   "jobs.delete",
   "market.view",
   "market.edit",
+  "live.view",
+  "live.start",
 ];

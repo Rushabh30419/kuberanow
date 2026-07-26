@@ -162,17 +162,26 @@ model Job {
 }
 
 model Application {
-  id          String   @id @default(cuid())
-  jobId       String
-  userId      String?
-  name        String
-  email       String
-  phone       String?
-  coverLetter String?
-  createdAt   DateTime @default(now())
+  id            String   @id @default(cuid())
+  jobId         String
+  userId        String?
+  name          String
+  email         String
+  phone         String?
+  coverLetter   String?
+  read          Boolean  @default(false)
+  readAt        DateTime?
+  resumePath    String?  // relative path under public/, e.g. /uploads/applications/<id>/resume.pdf
+  resumeName    String?  // original filename
+  resumeSize    Int?     // bytes
+  resumeMime    String?  // e.g. application/pdf
+  createdAt     DateTime @default(now())
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([read, createdAt])
+  @@index([jobId, createdAt])
 }
 
 model ContactSubmission {
@@ -181,7 +190,11 @@ model ContactSubmission {
   email     String
   subject   String
   message   String
+  read      Boolean  @default(false)
+  readAt    DateTime?
   createdAt DateTime @default(now())
+
+  @@index([read, createdAt])
 }
 
 // ============ Market data ============
@@ -239,4 +252,58 @@ model SavedCalculation {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
+}
+
+// ============ Live streaming ============
+//
+// One `LiveStream` row tracks the persistent state of the live channel
+// (title, RTMP ingest URL, HLS playback URL, OBS connection). One optional
+// `LiveStreamSession` row per "go-live" cycle records the start/end time and
+// peak viewer count for analytics.
+
+model LiveStream {
+  id              String   @id @default("singleton")
+  title           String   @default("KuberaNow Live")
+  description     String?
+  status          String   @default("offline") // "offline" | "live" | "paused" | "error"
+  startedAt       DateTime?
+  endedAt         DateTime?
+  // OBS WebSocket (v5) connection
+  obsHost         String?  // e.g. "127.0.0.1"
+  obsPort         Int?     // default 4455
+  obsPassword     String?  // optional
+  obsConnected    Boolean  @default(false)
+  obsScene        String?  // current scene name from OBS
+  // CDN / streaming provider
+  rtmpUrl         String?  // OBS pushes the stream here
+  rtmpKey         String?  // stream key (kept private — only shown once)
+  hlsUrl          String?  // public playback URL (HLS .m3u8) — served by the CDN
+  // Viewer tracking (approximate, sliding 5-minute window)
+  peakViewers     Int      @default(0)
+  totalViews      Int      @default(0)
+  // Recording
+  recordingEnabled Boolean @default(false)
+  recordingUrl     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model LiveStreamSession {
+  id            String   @id @default(cuid())
+  startedAt     DateTime @default(now())
+  endedAt       DateTime?
+  title         String
+  peakViewers   Int      @default(0)
+  totalViews    Int      @default(0)
+  recordingUrl  String?
+}
+
+// Per-viewer heartbeat (TTL-cleansed by the viewer-count poller)
+model LiveStreamViewer {
+  id         String   @id @default(cuid())
+  sessionId  String   // anonymous viewer id (cookie)
+  lastSeen   DateTime @default(now())
+  userAgent  String?
+
+  @@index([lastSeen])
 }
