@@ -1,0 +1,199 @@
+// KuberaNow — full dynamic data model
+// Database: SQLite for local dev. To switch to PostgreSQL (Supabase/Neon):
+//   1. Change provider below to "postgresql"
+//   2. Re-add @db.Decimal / @db.Text annotations for strict column types
+//   3. Optionally re-enable enums (search for the "SQLite: enum as String" notes)
+//   4. Run `npx prisma migrate dev` against your new DATABASE_URL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// SQLite has no enums — we store them as String and constrain in app code.
+// Role values: "admin" | "editor" | "reader"
+// Status values: "draft" | "published"
+// Market category values: "index" | "stock" | "mutual_fund" | "ipo" | "commodity" | "crypto"
+// Calc type values: "sip" | "fd" | "emi" | "tax" | "swp"
+
+// ============ Auth.js standard tables ============
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  passwordHash  String?
+  role          String   @default("reader") // "admin" | "editor" | "reader"
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  applications      Application[]
+  savedCalculations SavedCalculation[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============ Content ============
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique // "india", "personal-finance", ...
+  name        String    // "Economy"
+  description String?
+  sortOrder   Int       @default(0)
+  articles    Article[]
+}
+
+model Article {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  excerpt    String
+  body       String
+  imageUrl   String?
+  categoryId String
+  author     String
+  status     String   @default("draft") // "draft" | "published"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId, status])
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  experience  String
+  salary      String
+  location    String
+  type        String // "Full-time"
+  mode        String // "On-site"
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[]
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  jobId       String
+  userId      String?
+  name        String
+  email       String
+  phone       String?
+  coverLetter String?
+  createdAt   DateTime @default(now())
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// ============ Market data ============
+
+model MarketQuote {
+  id           String  @id @default(cuid())
+  category     String  // "index" | "stock" | "mutual_fund" | "ipo" | "commodity" | "crypto"
+  symbol       String
+  name         String
+  price        Float
+  change       Float
+  volume       String?
+  dayRangeLow  Float?
+  dayRangeHigh Float?
+  cagr3y       Float?
+  lotSize      String?
+  unit         String?
+  sortOrder    Int     @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@index([category, sortOrder])
+}
+
+// ============ CMS pages + site settings ============
+
+model Page {
+  id        String   @id @default(cuid())
+  slug      String   @unique // "about-us", "advertise", "disclaimer", "privacy-policy", "terms-of-use"
+  title     String
+  subtitle  String?
+  // JSON: array of { type: "heading"|"paragraph"|"list", value, level?, items? }
+  sections  String // JSON-encoded (SQLite has no native Json type via Prisma)
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSettings {
+  id        String   @id @default("singleton")
+  // JSON-encoded: { emails, phones, address, grievanceOfficer, socials }
+  data      String
+  updatedAt DateTime @updatedAt
+}
+
+// ============ User-generated content ============
+
+model SavedCalculation {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "sip" | "fd" | "emi" | "tax" | "swp"
+  // JSON snapshots of inputs and computed result
+  inputs    String
+  result    String
+  label     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}

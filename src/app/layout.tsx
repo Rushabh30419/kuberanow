@@ -3,6 +3,7 @@ import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Providers } from "@/components/providers";
 
 const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
@@ -24,9 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${notoSans.variable} h-full antialiased`}>
       <body className="bg-background-color text-foreground flex min-h-screen flex-col font-sans">
-        <Header />
-        {children}
-        <Footer />
+        <Providers>
+          <Header />
+          {children}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
