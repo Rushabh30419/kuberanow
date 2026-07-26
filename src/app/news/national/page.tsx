@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "National policy, governance and political economy updates.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function NationalPage() {
   const articles = await getNewsArticles("national");
   return (

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Business, markets and economy news from across Gujarat.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function GujaratPage() {
   const articles = await getNewsArticles("gujarat");
   return (

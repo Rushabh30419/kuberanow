@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: kuberanow:latest
+    container_name: kuberanow
+    ports:
+      - "3000:3000"
+    environment:
+      # SQLite file lives in /app/data (the named volume below) so it survives
+      # container recreation. Prisma + migrations stay in /app/prisma (read-only).
+      DATABASE_URL: "file:/app/data/dev.db"
+      # Generate your own with: openssl rand -base64 32
+      AUTH_SECRET: "kuberanow-dev-secret-please-change-in-production-9f8e7d"
+      AUTH_TRUST_HOST: "true"
+      NODE_ENV: "production"
+    volumes:
+      - kuberanow-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  kuberanow-data:

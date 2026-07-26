@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Latest IPO listings with listing gains and lot sizes.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function IpoPage() {
   const ipos = await getMarketRows("ipo");
   return (

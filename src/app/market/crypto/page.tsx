@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Live cryptocurrency prices in INR: Bitcoin, Ethereum and more.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function CryptoPage() {
   const crypto = await getMarketRows("crypto");
   return (

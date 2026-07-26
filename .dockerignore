@@ -1,0 +1,28 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (reinstalled inside the image)
+node_modules
+
+# Next.js build output
+.next
+out
+
+# Local SQLite DB + Prisma artifacts (don't ship these — mount a volume instead)
+prisma/*.db
+prisma/*.db-journal
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
+.env*
+!.env.example
+README.md
+.zcode

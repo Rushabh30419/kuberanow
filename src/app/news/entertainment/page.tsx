@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Film, streaming, music and the business of entertainment.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function EntertainmentPage() {
   const articles = await getNewsArticles("entertainment");
   return (

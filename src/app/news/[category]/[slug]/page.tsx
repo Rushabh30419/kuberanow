@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getArticleBySlug, getCategoryBySlug, getCategories } from "@/lib/data-access";
+import { getArticleBySlug, getCategoryBySlug } from "@/lib/data-access";
 import { PageHeader } from "@/components/ui/PageHeader";
+
+// This route is purely request-time rendered — no SSG (the DB doesn't
+// exist at build time inside Docker).
+export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ category: string; slug: string }>;
@@ -78,16 +82,4 @@ export default async function ArticlePage({ params }: Props) {
       </main>
     </>
   );
-}
-
-// Pre-render the known article routes at build time.
-export async function generateStaticParams() {
-  const categories = await getCategories();
-  const params: { category: string; slug: string }[] = [];
-  for (const c of categories) {
-    // Defer to runtime DB at request time if you don't want to enumerate here.
-    // For simplicity we leave the list empty so all routes render on-demand.
-    void c;
-  }
-  return params;
 }

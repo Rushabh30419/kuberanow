@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Macro and economic news shaping India's growth story.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function EconomyNewsPage() {
   const articles = await getNewsArticles("india");
   return (

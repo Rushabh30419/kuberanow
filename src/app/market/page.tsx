@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Real-time snapshot of Indian markets: indices and top stocks.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function LiveMarketPage() {
   const [indices, stocks] = await Promise.all([
     getMarketRows("index"),

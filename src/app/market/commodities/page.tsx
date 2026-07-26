@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "MCX commodity prices: gold, silver, crude oil and more.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function CommoditiesPage() {
   const commodities = await getMarketRows("commodity");
   return (

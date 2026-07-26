@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Top performing mutual funds with NAV and 3-year CAGR.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function MutualFundsPage() {
   const funds = await getMarketRows("mutual_fund");
   return (

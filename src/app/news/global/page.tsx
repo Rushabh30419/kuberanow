@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Global markets, central banks and geopolitics that move capital.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function GlobalPage() {
   const articles = await getNewsArticles("global");
   return (

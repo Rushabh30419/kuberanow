@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "India's tech sector, startups, semiconductors and digital policy.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function TechnologyPage() {
   const articles = await getNewsArticles("technology");
   return (

@@ -6,6 +6,31 @@ admin console.
 
 ## Quick start
 
+### Option A — Docker (recommended, one command)
+
+```bash
+docker compose up -d --build
+```
+
+That's it. The image builds, the container starts, and on first boot it
+applies migrations + seeds the demo content automatically. Open
+[http://localhost:3000](http://localhost:3000).
+
+- **Image size:** ~500 MB (Alpine + Node 22 + Next standalone + Prisma runtime)
+- **Runtime memory:** ~80 MB
+- **Data persists** across restarts via a named volume (`kuberanow-data`)
+- The seed runs **only on first boot** — subsequent restarts keep your data
+
+Useful commands:
+
+```bash
+docker compose logs -f        # tail logs
+docker compose down           # stop (keeps data volume)
+docker compose down -v        # stop AND wipe the database
+```
+
+### Option B — local dev (no Docker)
+
 ```bash
 npm install
 npm run db:migrate   # creates the local SQLite DB + tables

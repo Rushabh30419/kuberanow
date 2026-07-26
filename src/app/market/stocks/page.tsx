@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Live stock prices, movers and volume across NSE and BSE.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function StocksPage() {
   const stocks = await getMarketRows("stock");
   return (

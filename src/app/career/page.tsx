@@ -9,6 +9,9 @@ export const metadata: Metadata = {
     "Join KuberaNow — Gujarat's dedicated Gujarati-language business news digital TV. Open roles across editorial, production, design, and social media.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function CareerPage() {
   const jobs = await getJobs();
   return (

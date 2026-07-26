@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "Tax, savings, insurance and investing guidance for everyday readers.",
 };
 
+// Render at request time (DB not available at build time in Docker)
+export const dynamic = "force-dynamic";
+
 export default async function PersonalFinancePage() {
   const articles = await getNewsArticles("personal-finance");
   return (
