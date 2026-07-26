@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 
 /**
  * Protect authenticated routes.
- * /admin/*  — unauthenticated → /login; reader → /dashboard
+ * /admin/*     — unauthenticated → /login; no dashboard.view permission → /dashboard
  * /dashboard/* — unauthenticated → /login
  */
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
-  const role = req.auth?.user?.role;
+  const permissions = req.auth?.user?.permissions ?? [];
 
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
   const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
@@ -20,7 +20,8 @@ export default auth((req) => {
     );
   }
 
-  if (isAdminRoute && role === "reader") {
+  // Anyone in /admin must at least be able to view the dashboard.
+  if (isAdminRoute && !permissions.includes("dashboard.view")) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 

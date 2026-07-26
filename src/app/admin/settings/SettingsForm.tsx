@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Save } from "lucide-react";
 import type { SiteSettingsData } from "@/lib/types";
+import { updateSiteSettings } from "@/lib/actions";
+import { Button, Field, inputClass, Card } from "@/components/admin/ui";
 
 type Props = {
   initial: SiteSettingsData | null;
@@ -41,65 +44,42 @@ export default function SettingsForm({ initial, action }: Props) {
           else setError(res.error ?? "Save failed.");
         })
       }
-      className="space-y-5"
+      className="space-y-6"
     >
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Contact emails (one per line)</label>
-        <textarea
-          value={emails}
-          onChange={(e) => setEmails(e.target.value)}
-          rows={4}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
-        />
-      </div>
+      <Card className="space-y-4 p-5">
+        <Field label="Contact emails" hint="One per line">
+          <textarea
+            value={emails}
+            onChange={(e) => setEmails(e.target.value)}
+            rows={4}
+            className={`${inputClass} font-mono`}
+          />
+        </Field>
+      </Card>
 
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-          Phone numbers <span className="text-slate-400">(label | number | wa.me URL, one per line)</span>
-        </label>
-        <textarea
-          value={phones}
-          onChange={(e) => setPhones(e.target.value)}
-          rows={3}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
-        />
-      </div>
+      <Card className="space-y-4 p-5">
+        <Field label="Phone numbers" hint="label | number | wa.me URL — one per line">
+          <textarea
+            value={phones}
+            onChange={(e) => setPhones(e.target.value)}
+            rows={3}
+            className={`${inputClass} font-mono text-xs`}
+          />
+        </Field>
+        <Field label="Office address">
+          <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={2} className={inputClass} />
+        </Field>
+        <Field label="Grievance officer">
+          <input value={officer} onChange={(e) => setOfficer(e.target.value)} className={inputClass} />
+        </Field>
+      </Card>
 
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Office address</label>
-        <textarea
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          rows={2}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        />
-      </div>
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
+      {saved && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">✓ Settings saved.</div>}
 
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Grievance officer</label>
-        <input
-          value={officer}
-          onChange={(e) => setOfficer(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        />
-      </div>
-
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
-      )}
-      {saved && (
-        <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
-          ✓ Settings saved.
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-blue-700 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
-      >
+      <Button type="submit" disabled={pending} icon={Save}>
         {pending ? "Saving…" : "Save settings"}
-      </button>
+      </Button>
     </form>
   );
 }

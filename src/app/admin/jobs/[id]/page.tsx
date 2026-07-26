@@ -1,22 +1,21 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import JobForm from "../JobForm";
+import { requirePermission } from "@/lib/auth-guard";
 import { prisma } from "@/lib/db";
+import { PageHeader, Card } from "@/components/admin/ui";
+import JobForm from "../JobForm";
 
 export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await requirePermission("jobs.edit");
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) notFound();
 
   return (
     <div>
-      <Link href="/admin/jobs" className="text-xs text-slate-500 hover:text-slate-900">
-        ← Back to jobs
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900">Edit job</h1>
-      <div className="mt-6 max-w-2xl rounded-xl border border-slate-200 bg-white p-6">
+      <PageHeader title="Edit job" />
+      <Card className="max-w-2xl p-6">
         <JobForm job={job} />
-      </div>
+      </Card>
     </div>
   );
 }

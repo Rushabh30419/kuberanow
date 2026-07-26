@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Save } from "lucide-react";
 import { upsertJob } from "@/lib/actions";
+import { Button, Field, inputClass } from "@/components/admin/ui";
 
 type Props = {
   job?: {
@@ -41,101 +43,33 @@ export default function JobForm({ job }: Props) {
     >
       {job && <input type="hidden" name="id" value={job.id} />}
 
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Title</label>
-        <input
-          name="title"
-          defaultValue={job?.title}
-          required
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-        />
-      </div>
+      <Field label="Title">
+        <input name="title" defaultValue={job?.title} required className={inputClass} />
+      </Field>
 
-      <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Description</label>
-        <textarea
-          name="description"
-          defaultValue={job?.description}
-          rows={3}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-        />
-      </div>
+      <Field label="Description">
+        <textarea name="description" defaultValue={job?.description} rows={3} className={inputClass} />
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">Experience</label>
-          <input
-            name="experience"
-            defaultValue={job?.experience}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">Salary</label>
-          <input
-            name="salary"
-            defaultValue={job?.salary}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">Location</label>
-          <input
-            name="location"
-            defaultValue={job?.location}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">Type</label>
-          <input
-            name="type"
-            defaultValue={job?.type ?? "Full-time"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-700">Mode</label>
-          <input
-            name="mode"
-            defaultValue={job?.mode ?? "On-site"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div className="flex items-end">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              name="active"
-              defaultChecked={job?.active ?? true}
-              className="size-4 rounded border-slate-300"
-            />
-            Active (visible on site)
-          </label>
-        </div>
+        <Field label="Experience"><input name="experience" defaultValue={job?.experience} className={inputClass} /></Field>
+        <Field label="Salary"><input name="salary" defaultValue={job?.salary} className={inputClass} /></Field>
+        <Field label="Location"><input name="location" defaultValue={job?.location} className={inputClass} /></Field>
+        <Field label="Type"><input name="type" defaultValue={job?.type ?? "Full-time"} className={inputClass} /></Field>
+        <Field label="Mode"><input name="mode" defaultValue={job?.mode ?? "On-site"} className={inputClass} /></Field>
+        <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-700">
+          <input type="checkbox" name="active" defaultChecked={job?.active ?? true} className="size-4 rounded border-slate-300" />
+          Active (visible on site)
+        </label>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
 
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg bg-blue-700 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
-        >
+        <Button type="submit" disabled={pending} icon={Save}>
           {pending ? "Saving…" : job ? "Save changes" : "Create job"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push("/admin/jobs")}
-          className="rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400"
-        >
-          Cancel
-        </button>
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.push("/admin/jobs")}>Cancel</Button>
       </div>
     </form>
   );

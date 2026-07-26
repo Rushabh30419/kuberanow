@@ -1,18 +1,18 @@
-import Link from "next/link";
+import { requirePermission } from "@/lib/auth-guard";
+import { getUserPermissions, getCategories } from "@/lib/data-access";
+import { PageHeader, Card } from "@/components/admin/ui";
 import ArticleForm from "../ArticleForm";
-import { getCategories } from "@/lib/data-access";
 
 export default async function NewArticlePage() {
-  const categories = await getCategories();
+  const user = await requirePermission("articles.create");
+  const [categories, perms] = await Promise.all([getCategories(), getUserPermissions(user.id)]);
+
   return (
     <div>
-      <Link href="/admin/articles" className="text-xs text-slate-500 hover:text-slate-900">
-        ← Back to articles
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900">New article</h1>
-      <div className="mt-6 max-w-2xl rounded-xl border border-slate-200 bg-white p-6">
-        <ArticleForm categories={categories} />
-      </div>
+      <PageHeader title="New article" />
+      <Card className="max-w-2xl p-6">
+        <ArticleForm categories={categories} canPublish={perms.includes("articles.publish")} />
+      </Card>
     </div>
   );
 }

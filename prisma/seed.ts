@@ -273,7 +273,7 @@ const SITE_SETTINGS = {
 async function main() {
   console.log("🌱 Seeding…");
 
-  // Wipe (order matters for FK constraints)
+  // Wipe (order matters for FK constraints: dependents first)
   await prisma.savedCalculation.deleteMany();
   await prisma.contactSubmission.deleteMany();
   await prisma.application.deleteMany();
@@ -286,19 +286,53 @@ async function main() {
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.rolePermission.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.permission.deleteMany();
 
-  // Users
+  // Permissions (from the code-defined catalog)
+  const { PERMISSIONS, ADMIN_PERMISSIONS, EDITOR_PERMISSIONS } = await import("../src/lib/permissions");
+  for (const p of PERMISSIONS) {
+    await prisma.permission.create({ data: p });
+  }
+
+  // Roles (system roles — cannot be deleted from the admin)
+  const adminRole = await prisma.role.create({
+    data: {
+      name: "Admin",
+      description: "Full access to every part of the console.",
+      system: true,
+      permissions: { create: ADMIN_PERMISSIONS.map((key) => ({
+        permission: { connect: { key } },
+      })) },
+    },
+  });
+  const editorRole = await prisma.role.create({
+    data: {
+      name: "Editor",
+      description: "Manages articles, jobs, and market data.",
+      system: true,
+      permissions: { create: EDITOR_PERMISSIONS.map((key) => ({
+        permission: { connect: { key } },
+      })) },
+    },
+  });
+  const readerRole = await prisma.role.create({
+    data: {
+      name: "Reader",
+      description: "No admin access. Has a personal dashboard only.",
+      system: true,
+    },
+  });
+
+  // Users (linked to roles; legacy `role` string kept in sync for the JWT)
   const passwordHash = await bcrypt.hash("admin123", 12);
   const editorHash = await bcrypt.hash("editor123", 12);
   const readerHash = await bcrypt.hash("reader123", 12);
 
-  await prisma.user.createMany({
-    data: [
-      { email: "admin@kuberanow.com", name: "Admin User", role: "admin", passwordHash },
-      { email: "editor@kuberanow.com", name: "Editor User", role: "editor", passwordHash: editorHash },
-      { email: "reader@kuberanow.com", name: "Reader User", role: "reader", passwordHash: readerHash },
-    ],
-  });
+  await prisma.user.create({ data: { email: "admin@kuberanow.com",  name: "Admin User",  role: "admin",  roleId: adminRole.id,   passwordHash } });
+  await prisma.user.create({ data: { email: "editor@kuberanow.com", name: "Editor User", role: "editor", roleId: editorRole.id,   passwordHash: editorHash } });
+  await prisma.user.create({ data: { email: "reader@kuberanow.com", name: "Reader User", role: "reader", roleId: readerRole.id,   passwordHash: readerHash } });
 
   // Categories
   for (const c of CATEGORIES) {
@@ -375,6 +409,7 @@ async function main() {
   console.log("   Quotes:     38 across 6 asset classes");
   console.log("   Jobs:       5 openings");
   console.log("   Pages:      5 CMS pages");
+  console.log("   Roles:      Admin / Editor / Reader (system) + permission matrix");
 }
 
 main()

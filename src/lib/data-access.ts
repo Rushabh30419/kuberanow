@@ -193,6 +193,43 @@ export async function getApplications(userId: string) {
 
 // ─── Admin overview counts ──────────────────────────────────────────────
 
+/** Load the permission keys for a user's role (empty if no role assigned). */
+export async function getUserPermissions(userId: string): Promise<string[]> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      roleRelation: {
+        select: {
+          permissions: {
+            select: { permission: { select: { key: true } } },
+          },
+        },
+      },
+    },
+  });
+  return user?.roleRelation?.permissions.map((rp) => rp.permission.key) ?? [];
+}
+
+/** All roles with their permission counts + member counts (for the roles admin). */
+export async function getRoles() {
+  return prisma.role.findMany({
+    orderBy: { createdAt: "asc" },
+    include: {
+      _count: { select: { users: true, permissions: true } },
+    },
+  });
+}
+
+export async function getRole(id: string) {
+  return prisma.role.findUnique({
+    where: { id },
+    include: {
+      permissions: { include: { permission: true } },
+      _count: { select: { users: true } },
+    },
+  });
+}
+
 export async function getAdminCounts() {
   const [articles, jobs, users, submissions, applications] = await Promise.all([
     prisma.article.count(),

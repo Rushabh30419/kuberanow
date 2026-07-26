@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check, Save } from "lucide-react";
 import { updateMarketQuote } from "@/lib/actions";
 
 type Quote = {
@@ -32,8 +33,8 @@ export default function MarketEditor({ byCategory }: Props) {
   const [savedId, setSavedId] = useState<string | null>(null);
 
   return (
-    <div className="mt-6">
-      {/* Category tabs */}
+    <div>
+      {/* Tabs */}
       <div className="flex flex-wrap gap-1 border-b border-slate-200">
         {categories.map((c) => (
           <button
@@ -41,7 +42,7 @@ export default function MarketEditor({ byCategory }: Props) {
             onClick={() => setActive(c)}
             className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors ${
               active === c
-                ? "border-blue-700 text-blue-700"
+                ? "border-primary-navy text-primary-navy"
                 : "border-transparent text-slate-500 hover:text-slate-900"
             }`}
           >
@@ -50,16 +51,15 @@ export default function MarketEditor({ byCategory }: Props) {
         ))}
       </div>
 
-      {/* Editable table */}
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-500 uppercase">
             <tr>
-              <th className="px-3 py-2 text-left font-semibold">Symbol</th>
-              <th className="px-3 py-2 text-left font-semibold">Name</th>
-              <th className="px-3 py-2 text-right font-semibold">Price</th>
-              <th className="px-3 py-2 text-right font-semibold">Change %</th>
-              <th className="px-3 py-2 text-left font-semibold">Volume</th>
+              <th className="px-3 py-2 text-left">Symbol</th>
+              <th className="px-3 py-2 text-left">Name</th>
+              <th className="px-3 py-2 text-right">Price</th>
+              <th className="px-3 py-2 text-right">Change %</th>
+              <th className="px-3 py-2 text-left">Volume</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -105,7 +105,7 @@ function QuoteRow({
 
   return (
     <tr>
-      <td className="px-3 py-2 font-mono font-semibold text-slate-900">{quote.symbol}</td>
+      <td className="px-3 py-2 font-mono font-semibold text-career-heading">{quote.symbol}</td>
       <td className="px-3 py-2 text-slate-600">{quote.name}</td>
       <td className="px-3 py-2 text-right">
         <input
@@ -113,7 +113,7 @@ function QuoteRow({
           step="0.01"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          className="w-28 rounded border border-slate-300 px-2 py-1 text-right text-sm"
+          className="w-28 rounded-md border border-slate-300 px-2 py-1 text-right text-sm focus:border-primary-navy focus:outline-none"
         />
       </td>
       <td className="px-3 py-2 text-right">
@@ -122,7 +122,7 @@ function QuoteRow({
           step="0.01"
           value={change}
           onChange={(e) => setChange(e.target.value)}
-          className="w-20 rounded border border-slate-300 px-2 py-1 text-right text-sm"
+          className="w-20 rounded-md border border-slate-300 px-2 py-1 text-right text-sm focus:border-primary-navy focus:outline-none"
         />
       </td>
       <td className="px-3 py-2">
@@ -131,20 +131,22 @@ function QuoteRow({
           value={volume}
           onChange={(e) => setVolume(e.target.value)}
           placeholder="—"
-          className="w-24 rounded border border-slate-300 px-2 py-1 text-sm"
+          className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-primary-navy focus:outline-none"
         />
       </td>
       <td className="px-3 py-2 text-right">
         {saved ? (
-          <span className="text-xs font-semibold text-green-700">✓ Saved</span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+            <Check className="size-3.5" /> Saved
+          </span>
         ) : (
           <button
             type="button"
             disabled={pending}
             onClick={() => onSave(Number(price), Number(change), volume || undefined)}
-            className="text-xs font-semibold text-blue-700 hover:underline disabled:opacity-60"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline disabled:opacity-60"
           >
-            Save
+            <Save className="size-3.5" /> Save
           </button>
         )}
       </td>

@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/db";
+import { requirePermission } from "@/lib/auth-guard";
+import { PageHeader } from "@/components/admin/ui";
 import MarketEditor from "./MarketEditor";
 
 export default async function MarketAdminPage() {
+  await requirePermission("market.view");
   const quotes = await prisma.marketQuote.findMany({
     orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
   });
 
-  // Group by category
   const byCategory = quotes.reduce<Record<string, typeof quotes>>((acc, q) => {
     (acc[q.category] ??= []).push(q);
     return acc;
@@ -14,11 +16,10 @@ export default async function MarketAdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Market data</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Edit price, change %, and volume. Changes appear on the live site immediately.
-      </p>
-
+      <PageHeader
+        title="Market data"
+        subtitle="Edit price, change %, and volume. Changes appear on the live site immediately."
+      />
       <MarketEditor byCategory={byCategory} />
     </div>
   );

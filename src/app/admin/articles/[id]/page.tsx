@@ -1,28 +1,26 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import ArticleForm from "../ArticleForm";
+import { requirePermission } from "@/lib/auth-guard";
+import { getUserPermissions, getCategories } from "@/lib/data-access";
 import { prisma } from "@/lib/db";
-import { getCategories } from "@/lib/data-access";
+import { PageHeader, Card } from "@/components/admin/ui";
+import ArticleForm from "../ArticleForm";
 
 export default async function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [article, categories] = await Promise.all([
-    prisma.article.findUnique({
-      where: { id },
-      include: { category: true },
-    }),
+  const user = await requirePermission("articles.edit");
+
+  const [article, categories, perms] = await Promise.all([
+    prisma.article.findUnique({ where: { id }, include: { category: true } }),
     getCategories(),
+    getUserPermissions(user.id),
   ]);
 
   if (!article) notFound();
 
   return (
     <div>
-      <Link href="/admin/articles" className="text-xs text-slate-500 hover:text-slate-900">
-        ← Back to articles
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold text-slate-900">Edit article</h1>
-      <div className="mt-6 max-w-2xl rounded-xl border border-slate-200 bg-white p-6">
+      <PageHeader title="Edit article" />
+      <Card className="max-w-2xl p-6">
         <ArticleForm
           article={{
             id: article.id,
@@ -35,8 +33,9 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
             category: { slug: article.category.slug },
           }}
           categories={categories}
+          canPublish={perms.includes("articles.publish")}
         />
-      </div>
+      </Card>
     </div>
   );
 }

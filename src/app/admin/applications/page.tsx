@@ -1,53 +1,53 @@
-import { requireAdmin } from "@/lib/auth-guard";
+import { Mail } from "lucide-react";
+import { requirePermission } from "@/lib/auth-guard";
 import { getAllApplications } from "@/lib/data-access";
+import { PageHeader, DataTable, Badge, type Column } from "@/components/admin/ui";
 
 export default async function ApplicationsPage() {
-  await requireAdmin();
+  await requirePermission("applications.view");
   const apps = await getAllApplications();
+
+  const columns: Column<(typeof apps)[number]>[] = [
+    {
+      key: "applicant",
+      header: "Applicant",
+      cell: (a) => (
+        <div>
+          <div className="font-semibold text-career-heading">{a.name}</div>
+          <a href={`mailto:${a.email}`} className="text-xs text-blue-700 hover:underline">{a.email}</a>
+        </div>
+      ),
+    },
+    { key: "role", header: "Role", hideOnMobile: true, cell: (a) => <Badge color="navy">{a.job.title}</Badge> },
+    { key: "phone", header: "Phone", hideOnMobile: true, cell: (a) => <span className="text-slate-600">{a.phone ?? "—"}</span> },
+    {
+      key: "note",
+      header: "Cover note",
+      hideOnMobile: true,
+      cell: (a) => <span className="line-clamp-2 max-w-xs text-slate-600">{a.coverLetter ?? "—"}</span>,
+    },
+    {
+      key: "received",
+      header: "Received",
+      cell: (a) => <span className="text-xs text-slate-500">{new Date(a.createdAt).toLocaleDateString()}</span>,
+    },
+  ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Job applications</h1>
-      <p className="mt-1 text-sm text-slate-500">{apps.length} total</p>
-
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Applicant</th>
-              <th className="hidden px-4 py-3 text-left font-semibold sm:table-cell">Role</th>
-              <th className="hidden px-4 py-3 text-left font-semibold md:table-cell">Phone</th>
-              <th className="hidden px-4 py-3 text-left font-semibold lg:table-cell">Cover note</th>
-              <th className="px-4 py-3 text-left font-semibold">Received</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {apps.map((a) => (
-              <tr key={a.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <div className="font-medium text-slate-900">{a.name}</div>
-                  <a href={`mailto:${a.email}`} className="text-xs text-blue-700 hover:underline">{a.email}</a>
-                </td>
-                <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">{a.job.title}</td>
-                <td className="hidden px-4 py-3 text-slate-600 md:table-cell">{a.phone ?? "—"}</td>
-                <td className="hidden max-w-xs px-4 py-3 text-slate-600 lg:table-cell">
-                  <span className="line-clamp-2">{a.coverLetter ?? "—"}</span>
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-500">
-                  {new Date(a.createdAt).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-            {apps.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  No applications yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <PageHeader title="Job applications" subtitle={`${apps.length} total`} />
+      <DataTable
+        columns={columns}
+        rows={apps}
+        rowKey={(a) => a.id}
+        empty={
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+            <Mail className="mb-3 size-8 text-slate-300" />
+            <p className="font-semibold text-slate-700">No applications yet</p>
+            <p className="mt-1 text-sm text-slate-500">Job applications from the careers page will appear here.</p>
+          </div>
+        }
+      />
     </div>
   );
 }

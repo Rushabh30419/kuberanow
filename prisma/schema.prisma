@@ -26,15 +26,58 @@ model User {
   email         String   @unique
   name          String?
   passwordHash  String?
-  role          String   @default("reader") // "admin" | "editor" | "reader"
+  // Legacy role string kept for backward compat with the JWT/proxy during the
+  // migration. The source of truth is now the roleId relation below; this
+  // column is derived from it at login.
+  role          String   @default("reader")
+  roleId        String?
   image         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  accounts          Account[]
-  sessions          Session[]
-  applications      Application[]
-  savedCalculations SavedCalculation[]
+  roleRelation       Role?             @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  accounts           Account[]
+  sessions           Session[]
+  applications       Application[]
+  savedCalculations  SavedCalculation[]
+}
+
+// A named bundle of permissions that can be assigned to many users.
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  // System roles (Admin, Editor, Reader) are seeded and cannot be deleted.
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       User[]
+}
+
+// Single permission definition (e.g. "articles.edit"). The catalog is fixed
+// in code (src/lib/permissions.ts) and seeded here; admins toggle which
+// roles hold which permissions via RolePermission rows.
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique // "articles.edit"
+  label       String   // "Edit articles"
+  description String?
+  category    String   // "Articles" (for grouping in the matrix UI)
+  roles       RolePermission[]
+
+  @@index([category])
+}
+
+// Join table: which roles have which permissions.
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
 }
 
 model Account {
