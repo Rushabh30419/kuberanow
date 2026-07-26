@@ -17,6 +17,12 @@ const CALC_LABELS: Record<string, string> = {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+
+  // Admins and editors belong in the admin console — send them there.
+  if (user.role !== "reader") {
+    redirect("/admin");
+  }
+
   const [calcs, apps] = await Promise.all([
     getSavedCalculations(user.id),
     getApplications(user.id),
@@ -31,11 +37,6 @@ export default async function DashboardPage() {
             Welcome back, {user.name ?? user.email}.
           </p>
         </div>
-        {user.role !== "reader" && (
-          <Link href="/admin" className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
-            Go to admin →
-          </Link>
-        )}
       </div>
 
       {/* Saved calculations */}
