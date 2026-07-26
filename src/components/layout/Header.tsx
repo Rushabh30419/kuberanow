@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SocialLinks } from "./SocialLinks";
+import { HeaderUserMenu } from "./HeaderUserMenu";
 
 type SubItem = { label: string; href: string };
 type NavItem = { label: string; href: string; children?: SubItem[] };
@@ -267,8 +268,10 @@ export function Header() {
             </div>
 
             {/* Social icons (desktop lg+) */}
-            <div className="hidden items-center gap-1 lg:flex">
+            <div className="hidden items-center gap-2 lg:flex">
               <SocialLinks />
+              <span className="mx-1 h-4 w-px bg-white/20" aria-hidden />
+              <HeaderUserMenu />
             </div>
           </div>
         </div>
@@ -413,12 +416,15 @@ export function Header() {
           })}
         </nav>
 
-        {/* Drawer footer — social */}
+        {/* Drawer footer — social + account */}
         <div className="border-t border-white/10 px-5 py-4">
           <p className="mb-3 text-[11px] font-semibold tracking-widest text-white/50 uppercase">
             Follow us
           </p>
           <SocialLinks />
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <HeaderUserMenu />
+          </div>
         </div>
       </aside>
     </header>

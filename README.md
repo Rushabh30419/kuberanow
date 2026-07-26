@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KuberaNow — Dynamic Edition
 
-## Getting Started
+Independent business & financial journalism platform built with Next.js 16,
+Prisma 7, Auth.js v5, and Tailwind v4. Fully database-backed with a role-based
+admin console.
 
-First, run the development server:
+## Quick start
 
 ```bash
+npm install
+npm run db:migrate   # creates the local SQLite DB + tables
+npm run db:seed      # seeds demo users, 42 articles, 38 market quotes, 5 jobs, etc.
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Default logins
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role   | Email                    | Password    |
+| ------ | ------------------------ | ----------- |
+| Admin  | admin@kuberanow.com      | `admin123`  |
+| Editor | editor@kuberanow.com     | `editor123` |
+| Reader | reader@kuberanow.com     | `reader123` |
 
-## Learn More
+Visit `/login` to sign in, or `/register` to create a new (reader) account.
 
-To learn more about Next.js, take a look at the following resources:
+## What's dynamic
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+All data lives in the database and is editable from `/admin`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Market data** — 6 asset classes (indices, stocks, MFs, IPO, commodities,
+  crypto) editable at `/admin/market`. Changes appear on `/market/*` instantly.
+- **News articles** — 7 categories, full CRUD at `/admin/articles`, with
+  draft/published status. Article detail pages at
+  `/news/<category>/<slug>`.
+- **Jobs** — CRUD at `/admin/jobs`. Visitors apply inline on `/career`.
+- **Contact** — submissions from the `/contact` form land in
+  `/admin/contact`.
+- **Site settings** — emails, phones, address, grievance officer at
+  `/admin/settings`.
 
-## Deploy on Vercel
+## Roles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **admin** — full access to every admin screen, can change user roles.
+- **editor** — create/edit articles, jobs, market data. Cannot see
+  applications, messages, users, or settings.
+- **reader** — no admin access. Has a `/dashboard` with saved calculations
+  and submitted job applications.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Readers can save calculator results (SIP/FD/EMI/Tax/SWP) and apply for jobs;
+both are tracked on their dashboard.
+
+## Architecture
+
+```
+prisma/
+  schema.prisma           # data model (SQLite for dev, swap to Postgres for prod)
+  seed.ts                 # seeds all demo content
+src/
+  lib/
+    db.ts                 # Prisma singleton + driver adapter
+    auth.ts               # Auth.js v5 config (Credentials, JWT, role on session)
+    auth-guard.ts         # requireUser / requireEditor / requireAdmin
+    data-access.ts        # all read queries (getMarketRows, getNewsArticles, …)
+    actions.ts            # all server actions (submitContact, upsertArticle, …)
+    types.ts              # shared domain types
+  proxy.ts                # protects /admin/* and /dashboard/*
+  app/
+    (public pages)        # / /market/* /news/* /tools/* /career /contact …
+    login, register       # auth pages
+    dashboard             # reader dashboard
+    admin/                # role-guarded admin console
+```
+
+## Switching to PostgreSQL (Supabase / Neon)
+
+The project ships with SQLite for zero-config local dev. To move to Postgres:
+
+1. Create a Postgres database (Supabase or Neon free tier).
+2. Install the adapter: `npm install @prisma/adapter-pg`
+3. In `prisma/schema.prisma`, change `provider = "sqlite"` to `"postgresql"`.
+4. In `src/lib/db.ts` and `prisma/seed.ts`, swap the adapter:
+   ```ts
+   import { PrismaPg } from "@prisma/adapter-pg";
+   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+   ```
+5. Set `DATABASE_URL` in `.env` to your Postgres connection string.
+6. `npm run db:migrate && npm run db:seed`
+
+## npm scripts
+
+| Script           | Purpose                                  |
+| ---------------- | ---------------------------------------- |
+| `npm run dev`    | Start the dev server                     |
+| `npm run build`  | Production build                         |
+| `npm run start`  | Start the production server              |
+| `npm run db:migrate` | Create/apply DB migrations            |
+| `npm run db:seed`    | Seed demo content                     |
+| `npm run db:reset`   | Drop & re-seed the database           |
+| `npm run db:studio`  | Open Prisma Studio (browse/edit data) |
