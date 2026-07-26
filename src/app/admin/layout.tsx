@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireEditor } from "@/lib/auth-guard";
-import { logout } from "@/app/auth-actions";
 import LogoutButton from "./LogoutButton";
 
 export const metadata = {
