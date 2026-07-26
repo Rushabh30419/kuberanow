@@ -1,10 +1,15 @@
+import { PlusCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth-guard";
-import { PageHeader } from "@/components/admin/ui";
+import { getUserPermissions } from "@/lib/data-access";
+import { PageHeader, ButtonLink } from "@/components/admin/ui";
 import MarketEditor from "./MarketEditor";
 
 export default async function MarketAdminPage() {
-  await requirePermission("market.view");
+  const user = await requirePermission("market.view");
+  const perms = await getUserPermissions(user.id);
+  const canEdit = perms.includes("market.edit");
+
   const quotes = await prisma.marketQuote.findMany({
     orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
   });
@@ -19,8 +24,9 @@ export default async function MarketAdminPage() {
       <PageHeader
         title="Market data"
         subtitle="Edit price, change %, and volume. Changes appear on the live site immediately."
+        actions={canEdit && <ButtonLink href="/admin/market/new" icon={PlusCircle}>Add quote</ButtonLink>}
       />
-      <MarketEditor byCategory={byCategory} />
+      <MarketEditor byCategory={byCategory} canEdit={canEdit} />
     </div>
   );
 }

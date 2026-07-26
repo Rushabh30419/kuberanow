@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Save } from "lucide-react";
-import { updateMarketQuote } from "@/lib/actions";
+import { Check, Save, Trash2 } from "lucide-react";
+import { updateMarketQuote, deleteMarketQuote } from "@/lib/actions";
 
 type Quote = {
   id: string;
@@ -24,9 +24,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 type Props = {
   byCategory: Record<string, Quote[]>;
+  canEdit: boolean;
 };
 
-export default function MarketEditor({ byCategory }: Props) {
+export default function MarketEditor({ byCategory, canEdit }: Props) {
   const categories = Object.keys(byCategory);
   const [active, setActive] = useState(categories[0] ?? "index");
   const [pending, start] = useTransition();
@@ -61,6 +62,7 @@ export default function MarketEditor({ byCategory }: Props) {
               <th className="px-3 py-2 text-right">Change %</th>
               <th className="px-3 py-2 text-left">Volume</th>
               <th className="px-3 py-2"></th>
+              {canEdit && <th className="px-3 py-2"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -69,6 +71,7 @@ export default function MarketEditor({ byCategory }: Props) {
                 key={q.id}
                 quote={q}
                 pending={pending}
+                canEdit={canEdit}
                 saved={savedId === q.id}
                 onSave={(price, change, volume) =>
                   start(async () => {
@@ -77,6 +80,13 @@ export default function MarketEditor({ byCategory }: Props) {
                       setSavedId(q.id);
                       setTimeout(() => setSavedId(null), 1500);
                     }
+                  })
+                }
+                onDelete={() =>
+                  start(async () => {
+                    if (!confirm(`Delete ${q.symbol}?`)) return;
+                    const res = await deleteMarketQuote(q.id);
+                    if (!res.ok) alert((res as { error?: string }).error ?? "Delete failed.");
                   })
                 }
               />
@@ -92,12 +102,16 @@ function QuoteRow({
   quote,
   pending,
   saved,
+  canEdit,
   onSave,
+  onDelete,
 }: {
   quote: Quote;
   pending: boolean;
   saved: boolean;
+  canEdit: boolean;
   onSave: (price: number, change: number, volume?: string) => void;
+  onDelete: () => void;
 }) {
   const [price, setPrice] = useState(String(quote.price));
   const [change, setChange] = useState(String(quote.change));
@@ -150,6 +164,19 @@ function QuoteRow({
           </button>
         )}
       </td>
+      {canEdit && (
+        <td className="px-3 py-2 text-right">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onDelete}
+            aria-label={`Delete ${quote.symbol}`}
+            className="inline-flex items-center justify-center rounded-md p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-60"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </td>
+      )}
     </tr>
   );
 }

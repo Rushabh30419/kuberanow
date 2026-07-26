@@ -4,17 +4,31 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth-guard";
 import { getUserPermissions } from "@/lib/data-access";
 import { deleteArticle } from "@/lib/actions";
+import { parsePage, PAGE_SIZE } from "@/lib/pagination";
 import { PageHeader, ButtonLink, DataTable, Badge, type Column } from "@/components/admin/ui";
+import { Pagination } from "@/components/admin/Pagination";
 import DeleteButton from "../DeleteButton";
 
-export default async function ArticlesList() {
+export default async function ArticlesList({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const user = await requirePermission("articles.view");
   const perms = await getUserPermissions(user.id);
+  const { page: pageStr } = await searchParams;
+  const page = parsePage(pageStr);
+  const skip = (page - 1) * PAGE_SIZE;
 
-  const articles = await prisma.article.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { category: true },
-  });
+  const [articles, total] = await Promise.all([
+    prisma.article.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { category: true },
+      skip,
+      take: PAGE_SIZE,
+    }),
+    prisma.article.count(),
+  ]);
 
   const columns: Column<(typeof articles)[number]>[] = [
     {
@@ -62,7 +76,7 @@ export default async function ArticlesList() {
     <div>
       <PageHeader
         title="Articles"
-        subtitle={`${articles.length} total`}
+        subtitle={`${total} total`}
         actions={
           perms.includes("articles.create") && (
             <ButtonLink href="/admin/articles/new" icon={PlusCircle}>New article</ButtonLink>
@@ -70,6 +84,12 @@ export default async function ArticlesList() {
         }
       />
       <DataTable columns={columns} rows={articles} rowKey={(a) => a.id} />
+      <Pagination
+        page={page}
+        total={total}
+        pageSize={PAGE_SIZE}
+        hrefFor={(p) => `/admin/articles?page=${p}`}
+      />
     </div>
   );
 }

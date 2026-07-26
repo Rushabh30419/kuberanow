@@ -1,19 +1,34 @@
 import Link from "next/link";
 import { PlusCircle, Pencil } from "lucide-react";
 import { requirePermission } from "@/lib/auth-guard";
-import { getUserPermissions, getUsers } from "@/lib/data-access";
+import { getUserPermissions } from "@/lib/data-access";
 import { prisma } from "@/lib/db";
+import { deleteUser } from "@/lib/actions";
+import { parsePage, PAGE_SIZE } from "@/lib/pagination";
 import { PageHeader, ButtonLink, DataTable, Badge, type Column } from "@/components/admin/ui";
+import { Pagination } from "@/components/admin/Pagination";
+import DeleteButton from "../DeleteButton";
 
-export default async function UsersPage() {
-  const user = await requirePermission("users.view");
-  const perms = await getUserPermissions(user.id);
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const me = await requirePermission("users.view");
+  const perms = await getUserPermissions(me.id);
+  const { page: pageStr } = await searchParams;
+  const page = parsePage(pageStr);
+  const skip = (page - 1) * PAGE_SIZE;
 
-  // Eager-load role name for the badge
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { roleRelation: { select: { name: true } } },
-  });
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { roleRelation: { select: { name: true } } },
+      skip,
+      take: PAGE_SIZE,
+    }),
+    prisma.user.count(),
+  ]);
 
   const columns: Column<(typeof users)[number]>[] = [
     {
@@ -34,7 +49,11 @@ export default async function UsersPage() {
     {
       key: "role",
       header: "Role",
-      cell: (u) => <Badge color={u.role === "admin" ? "cyan" : u.role === "editor" ? "navy" : "slate"}>{u.roleRelation?.name ?? "Reader"}</Badge>,
+      cell: (u) => (
+        <Badge color={u.role === "admin" ? "cyan" : u.role === "editor" ? "navy" : "slate"}>
+          {u.roleRelation?.name ?? "Reader"}
+        </Badge>
+      ),
     },
     {
       key: "joined",
@@ -45,12 +64,18 @@ export default async function UsersPage() {
     {
       key: "actions",
       header: "",
-      cell: (u) =>
-        perms.includes("users.edit") ? (
-          <Link href={`/admin/users/${u.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline">
-            <Pencil className="size-3.5" /> Edit
-          </Link>
-        ) : null,
+      cell: (u) => (
+        <div className="flex items-center justify-end gap-3 text-xs font-semibold">
+          {perms.includes("users.edit") && (
+            <Link href={`/admin/users/${u.id}`} className="inline-flex items-center gap-1 text-blue-700 hover:underline">
+              <Pencil className="size-3.5" /> Edit
+            </Link>
+          )}
+          {perms.includes("users.delete") && u.id !== me.id && (
+            <DeleteButton id={u.id} action={deleteUser} />
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -58,10 +83,16 @@ export default async function UsersPage() {
     <div>
       <PageHeader
         title="Users"
-        subtitle={`${users.length} total`}
+        subtitle={`${total} total`}
         actions={perms.includes("users.create") && <ButtonLink href="/admin/users/new" icon={PlusCircle}>Invite user</ButtonLink>}
       />
       <DataTable columns={columns} rows={users} rowKey={(u) => u.id} />
+      <Pagination
+        page={page}
+        total={total}
+        pageSize={PAGE_SIZE}
+        hrefFor={(p) => `/admin/users?page=${p}`}
+      />
     </div>
   );
 }

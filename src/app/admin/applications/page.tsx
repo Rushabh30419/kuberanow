@@ -1,13 +1,44 @@
 import { Mail } from "lucide-react";
 import { requirePermission } from "@/lib/auth-guard";
 import { getAllApplications } from "@/lib/data-access";
+import { prisma } from "@/lib/db";
+import { deleteApplication } from "@/lib/actions";
+import { parsePage, PAGE_SIZE } from "@/lib/pagination";
 import { PageHeader, DataTable, Badge, type Column } from "@/components/admin/ui";
+import { Pagination } from "@/components/admin/Pagination";
+import DeleteButton from "../DeleteButton";
 
-export default async function ApplicationsPage() {
+export default async function ApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requirePermission("applications.view");
-  const apps = await getAllApplications();
+  const { page: pageStr } = await searchParams;
+  const page = parsePage(pageStr);
+  const skip = (page - 1) * PAGE_SIZE;
 
-  const columns: Column<(typeof apps)[number]>[] = [
+  const [apps, total] = await Promise.all([
+    prisma.application.findMany({
+      include: { job: { select: { title: true } } },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: PAGE_SIZE,
+    }),
+    prisma.application.count(),
+  ]);
+
+  const rows = apps.map((a) => ({
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    phone: a.phone,
+    coverLetter: a.coverLetter,
+    jobTitle: a.job.title,
+    createdAt: a.createdAt,
+  }));
+
+  const columns: Column<typeof rows[number]>[] = [
     {
       key: "applicant",
       header: "Applicant",
@@ -18,7 +49,7 @@ export default async function ApplicationsPage() {
         </div>
       ),
     },
-    { key: "role", header: "Role", hideOnMobile: true, cell: (a) => <Badge color="navy">{a.job.title}</Badge> },
+    { key: "role", header: "Role", hideOnMobile: true, cell: (a) => <Badge color="navy">{a.jobTitle}</Badge> },
     { key: "phone", header: "Phone", hideOnMobile: true, cell: (a) => <span className="text-slate-600">{a.phone ?? "—"}</span> },
     {
       key: "note",
@@ -31,14 +62,23 @@ export default async function ApplicationsPage() {
       header: "Received",
       cell: (a) => <span className="text-xs text-slate-500">{new Date(a.createdAt).toLocaleDateString()}</span>,
     },
+    {
+      key: "actions",
+      header: "",
+      cell: (a) => (
+        <div className="flex justify-end">
+          <DeleteButton id={a.id} action={deleteApplication} />
+        </div>
+      ),
+    },
   ];
 
   return (
     <div>
-      <PageHeader title="Job applications" subtitle={`${apps.length} total`} />
+      <PageHeader title="Job applications" subtitle={`${total} total`} />
       <DataTable
         columns={columns}
-        rows={apps}
+        rows={rows}
         rowKey={(a) => a.id}
         empty={
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
@@ -47,6 +87,12 @@ export default async function ApplicationsPage() {
             <p className="mt-1 text-sm text-slate-500">Job applications from the careers page will appear here.</p>
           </div>
         }
+      />
+      <Pagination
+        page={page}
+        total={total}
+        pageSize={PAGE_SIZE}
+        hrefFor={(p) => `/admin/applications?page=${p}`}
       />
     </div>
   );

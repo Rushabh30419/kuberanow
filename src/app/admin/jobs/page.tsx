@@ -4,13 +4,27 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth-guard";
 import { getUserPermissions } from "@/lib/data-access";
 import { deleteJob } from "@/lib/actions";
+import { parsePage, PAGE_SIZE } from "@/lib/pagination";
 import { PageHeader, ButtonLink, DataTable, Badge, type Column } from "@/components/admin/ui";
+import { Pagination } from "@/components/admin/Pagination";
 import DeleteButton from "../DeleteButton";
 
-export default async function JobsList() {
+export default async function JobsList({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const user = await requirePermission("jobs.view");
   const perms = await getUserPermissions(user.id);
-  const jobs = await prisma.job.findMany({ orderBy: { createdAt: "desc" } });
+  const { page: pageStr } = await searchParams;
+  const page = parsePage(pageStr);
+  const skip = (page - 1) * PAGE_SIZE;
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({ orderBy: { createdAt: "desc" }, skip, take: PAGE_SIZE }),
+    prisma.job.count(),
+  ]);
+  const activeCount = await prisma.job.count({ where: { active: true } });
 
   const columns: Column<(typeof jobs)[number]>[] = [
     {
@@ -57,10 +71,16 @@ export default async function JobsList() {
     <div>
       <PageHeader
         title="Jobs"
-        subtitle={`${jobs.length} total · ${jobs.filter((j) => j.active).length} active`}
+        subtitle={`${total} total · ${activeCount} active`}
         actions={perms.includes("jobs.create") && <ButtonLink href="/admin/jobs/new" icon={PlusCircle}>New job</ButtonLink>}
       />
       <DataTable columns={columns} rows={jobs} rowKey={(j) => j.id} />
+      <Pagination
+        page={page}
+        total={total}
+        pageSize={PAGE_SIZE}
+        hrefFor={(p) => `/admin/jobs?page=${p}`}
+      />
     </div>
   );
 }

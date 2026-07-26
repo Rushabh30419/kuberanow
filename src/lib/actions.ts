@@ -115,7 +115,20 @@ export async function upsertArticle(formData: FormData) {
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { ok: false, error: "Category not found." };
 
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  // Build a unique slug: if it collides with another article's slug,
+  // append -2, -3, etc. (avoids Prisma unique-constraint throws on rename.)
+  const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  let slug = baseSlug;
+  let suffix = 2;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const clash = await prisma.article.findFirst({
+      where: { slug, ...(id ? { NOT: { id } } : {}) },
+      select: { id: true },
+    });
+    if (!clash) break;
+    slug = `${baseSlug}-${suffix++}`;
+  }
 
   if (id) {
     await prisma.article.update({
@@ -195,6 +208,68 @@ export async function updateMarketQuote(id: string, data: { price: number; chang
   return { ok: true };
 }
 
+export async function createMarketQuote(formData: FormData) {
+  const user = await getAuthorizedUser("market.edit");
+  if (!user) return NOT_AUTHORIZED;
+
+  const category = String(formData.get("category") ?? "");
+  const symbol = String(formData.get("symbol") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const price = Number(formData.get("price") ?? 0);
+  const change = Number(formData.get("change") ?? 0);
+  const volume = String(formData.get("volume") ?? "").trim() || null;
+
+  if (!category || !symbol || !name) {
+    return { ok: false, error: "Category, symbol, and name are required." };
+  }
+  // max sortOrder in this category + 1
+  const max = await prisma.marketQuote.aggregate({
+    _max: { sortOrder: true },
+    where: { category },
+  });
+  await prisma.marketQuote.create({
+    data: {
+      category,
+      symbol,
+      name,
+      price,
+      change,
+      volume,
+      sortOrder: (max._max.sortOrder ?? -1) + 1,
+    },
+  });
+  revalidatePath("/market");
+  revalidatePath("/admin/market");
+  return { ok: true };
+}
+
+export async function deleteMarketQuote(id: string) {
+  const user = await getAuthorizedUser("market.edit");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.marketQuote.delete({ where: { id } });
+  revalidatePath("/market");
+  revalidatePath("/admin/market");
+  return { ok: true };
+}
+
+// ─── Admin: Applications & contact (delete only) ─────────────────────────
+
+export async function deleteApplication(id: string) {
+  const user = await getAuthorizedUser("applications.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.application.delete({ where: { id } });
+  revalidatePath("/admin/applications");
+  return { ok: true };
+}
+
+export async function deleteContactSubmission(id: string) {
+  const user = await getAuthorizedUser("contact.view");
+  if (!user) return NOT_AUTHORIZED;
+  await prisma.contactSubmission.delete({ where: { id } });
+  revalidatePath("/admin/contact");
+  return { ok: true };
+}
+
 // ─── Admin: Users ────────────────────────────────────────────────────────
 
 export async function upsertUser(formData: FormData) {
@@ -258,6 +333,14 @@ export async function deleteUser(id: string) {
   const user = await getAuthorizedUser("users.delete");
   if (!user) return NOT_AUTHORIZED;
   if (id === user.id) return { ok: false, error: "You can't delete your own account." };
+
+  // Don't let the last admin be removed (would lock everyone out).
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  if (target?.role === "admin") {
+    const adminCount = await prisma.user.count({ where: { role: "admin" } });
+    if (adminCount <= 1) return { ok: false, error: "Can't delete the last admin account." };
+  }
+
   await prisma.user.delete({ where: { id } });
   revalidatePath("/admin/users");
   return { ok: true };
@@ -348,7 +431,13 @@ export async function deleteRole(id: string) {
 export async function updateSiteSettings(jsonData: string) {
   const user = await getAuthorizedUser("settings.edit");
   if (!user) return NOT_AUTHORIZED;
-  JSON.parse(jsonData); // validate
+  // Validate the JSON before touching the DB so a bad payload returns a
+  // clean error instead of an unhandled server exception.
+  try {
+    JSON.parse(jsonData);
+  } catch {
+    return { ok: false, error: "Invalid JSON payload." };
+  }
   await prisma.siteSettings.upsert({
     where: { id: "singleton" },
     update: { data: jsonData },
