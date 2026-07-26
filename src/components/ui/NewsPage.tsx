@@ -7,7 +7,7 @@ type Props = {
   subtitle: string;
   breadcrumb: string;
   articles: NewsArticle[];
-  hrefPrefix?: string;
+  categorySlug?: string;
 };
 
 export function NewsPage({
@@ -15,6 +15,7 @@ export function NewsPage({
   subtitle,
   breadcrumb,
   articles,
+  categorySlug,
 }: Props) {
   return (
     <>
@@ -26,7 +27,7 @@ export function NewsPage({
           </h2>
           <p className="text-sm text-slate-500">{articles.length} articles</p>
         </div>
-        <NewsGrid articles={articles} />
+        <NewsGrid articles={articles} categorySlug={categorySlug} />
       </main>
     </>
   );

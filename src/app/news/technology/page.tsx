@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import { NewsPage } from "@/components/ui/NewsPage";
-import { NEWS } from "@/lib/data";
+import { getNewsArticles } from "@/lib/data-access";
 
 export const metadata: Metadata = {
   title: "Technology News — KuberaNow",
   description: "India's tech sector, startups, semiconductors and digital policy.",
 };
 
-export default function TechnologyPage() {
+export default async function TechnologyPage() {
+  const articles = await getNewsArticles("technology");
   return (
     <NewsPage
       title="Technology"
       subtitle="Semiconductors, startups, telecom, AI and the digital economy — India's tech pulse."
       breadcrumb="News / Technology"
-      articles={NEWS.technology}
+      articles={articles}
+      categorySlug="technology"
     />
   );
 }
