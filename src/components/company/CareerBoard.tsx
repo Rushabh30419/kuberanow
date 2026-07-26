@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useSession } from "next-auth/react";
+import { applyForJob } from "@/lib/actions";
 
 export type Job = {
+  id: string;
   title: string;
+  description?: string;
   experience: string;
   salary: string;
   location: string;
@@ -76,51 +80,7 @@ export function CareerBoard({ jobs }: { jobs: Job[] }) {
       {/* Job grid */}
       <div className="grid grid-cols-1 justify-items-center gap-4 xs:grid-cols-2 md:gap-5 lg:grid-cols-3">
         {filtered.map((j) => (
-          <article
-            key={j.title}
-            className="job-card border-career-stroke hover:shadow-job-card-hover flex h-fit w-full cursor-pointer flex-col rounded-lg border p-4 transition-shadow md:max-w-72.5"
-          >
-            <div className="border-career-stroke flex w-full flex-col gap-1 border-b pb-1">
-              <h3 className="text-career-dark flex min-h-11 items-center text-lg leading-5.5 font-bold text-pretty">
-                {j.title}
-              </h3>
-            </div>
-            <div className="flex w-full flex-col gap-4 pt-3">
-              <div className="flex w-full flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  {ICONS.briefcase}
-                  <p className="text-career-dark text-sm leading-4.5">{j.experience}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {ICONS.rupee}
-                  <p className="text-career-dark text-sm leading-4.5">{j.salary}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {ICONS.pin}
-                  <p className="text-career-dark text-sm leading-4.5">{j.location}</p>
-                </div>
-              </div>
-              <div className="flex w-full items-start justify-between gap-2">
-                <div className="flex flex-col gap-1.5">
-                  <span className="border-career-stroke bg-career-tint text-career-dark inline-flex items-center justify-center rounded-[36px] border px-2.5 py-1 text-xs leading-4 font-semibold">
-                    {j.type}
-                  </span>
-                  <span className="border-career-stroke bg-career-tint text-career-dark inline-flex items-center justify-center rounded-[36px] border px-2.5 py-1 text-xs leading-4 font-semibold">
-                    {j.mode}
-                  </span>
-                </div>
-                <a
-                  href={`mailto:info@kuberanow.com?subject=Application: ${encodeURIComponent(j.title)}`}
-                  className="text-primary inline-flex shrink-0 cursor-pointer items-center gap-1 rounded text-sm leading-4.5 font-semibold hover:underline"
-                >
-                  Apply
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </article>
+          <JobCard key={j.id} job={j} />
         ))}
       </div>
 
@@ -130,5 +90,104 @@ export function CareerBoard({ jobs }: { jobs: Job[] }) {
         </p>
       )}
     </>
+  );
+}
+
+function JobCard({ job }: { job: Job }) {
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <article className="job-card border-career-stroke hover:shadow-job-card-hover flex h-fit w-full cursor-pointer flex-col rounded-lg border p-4 transition-shadow md:max-w-72.5">
+      <div className="border-career-stroke flex w-full flex-col gap-1 border-b pb-1">
+        <h3 className="text-career-dark flex min-h-11 items-center text-lg leading-5.5 font-bold text-pretty">
+          {job.title}
+        </h3>
+      </div>
+      <div className="flex w-full flex-col gap-4 pt-3">
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex items-center gap-2">
+            {ICONS.briefcase}
+            <p className="text-career-dark text-sm leading-4.5">{job.experience}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {ICONS.rupee}
+            <p className="text-career-dark text-sm leading-4.5">{job.salary}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {ICONS.pin}
+            <p className="text-career-dark text-sm leading-4.5">{job.location}</p>
+          </div>
+        </div>
+        <div className="flex w-full items-start justify-between gap-2">
+          <div className="flex flex-col gap-1.5">
+            <span className="border-career-stroke bg-career-tint text-career-dark inline-flex items-center justify-center rounded-[36px] border px-2.5 py-1 text-xs leading-4 font-semibold">
+              {job.type}
+            </span>
+            <span className="border-career-stroke bg-career-tint text-career-dark inline-flex items-center justify-center rounded-[36px] border px-2.5 py-1 text-xs leading-4 font-semibold">
+              {job.mode}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen((v) => !v);
+              setDone(false);
+              setError(null);
+            }}
+            className="text-primary inline-flex shrink-0 cursor-pointer items-center gap-1 rounded text-sm leading-4.5 font-semibold hover:underline"
+          >
+            Apply
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-career-stroke bg-career-tint mt-2 rounded border p-3">
+            {done ? (
+              <p className="text-sm font-semibold text-green-700">
+                ✓ Application submitted. We&apos;ll be in touch.
+              </p>
+            ) : (
+              <form
+                action={(fd) =>
+                  start(async () => {
+                    setError(null);
+                    fd.set("jobId", job.id);
+                    const res = await applyForJob(fd);
+                    if (res.ok) setDone(true);
+                    else setError(res.error ?? "Submission failed.");
+                  })
+                }
+                className="flex flex-col gap-2"
+              >
+                <input name="name" placeholder="Full name" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" defaultValue={session?.user?.name ?? ""} required />
+                <input name="email" type="email" placeholder="Email" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" defaultValue={session?.user?.email ?? ""} required />
+                <input name="phone" placeholder="Phone (optional)" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" />
+                <textarea name="coverLetter" placeholder="Brief cover note (optional)" rows={2} className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs" />
+                {error && <p className="text-xs text-red-700">{error}</p>}
+                {!session && (
+                  <p className="text-[10px] text-slate-500">
+                    <a href="/login?callbackUrl=/career" className="text-blue-700 hover:underline">Sign in</a> to track this application.
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="bg-primary hover:bg-dark-navy1 w-full rounded px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  {pending ? "Submitting…" : "Submit application"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
   );
 }

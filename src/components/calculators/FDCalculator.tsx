@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalculatorLayout } from "../ui/CalculatorLayout";
 import { Slider, ResultStat } from "../ui/Slider";
+import { SaveCalcButton } from "./SaveCalcButton";
 
 const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -52,10 +53,18 @@ export function FDCalculator() {
         />
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4">
-        <ResultStat label="Principal" value={inr(principal)} />
-        <ResultStat label="Total Interest" value={inr(interest)} />
-        <ResultStat label="Maturity Value" value={inr(maturity)} accent />
+      <div className="space-y-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4">
+          <ResultStat label="Principal" value={inr(principal)} />
+          <ResultStat label="Total Interest" value={inr(interest)} />
+          <ResultStat label="Maturity Value" value={inr(maturity)} accent />
+        </div>
+        <SaveCalcButton
+          type="fd"
+          inputs={{ principal, rate, years }}
+          result={{ principal, interest, maturity }}
+          label={`FD ${inr(principal)} @ ${rate}% for ${years}y`}
+        />
       </div>
     </CalculatorLayout>
   );

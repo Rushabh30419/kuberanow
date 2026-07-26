@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalculatorLayout } from "../ui/CalculatorLayout";
 import { Slider, ResultStat } from "../ui/Slider";
+import { SaveCalcButton } from "./SaveCalcButton";
 
 const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -100,6 +101,13 @@ export function SIPCalculator() {
             </span>
           </div>
         </div>
+
+        <SaveCalcButton
+          type="sip"
+          inputs={{ monthly, rate, years }}
+          result={{ invested, gains, maturity }}
+          label={`SIP ${inr(monthly)}/mo @ ${rate}% for ${years}y`}
+        />
       </div>
     </CalculatorLayout>
   );

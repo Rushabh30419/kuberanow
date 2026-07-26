@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalculatorLayout } from "../ui/CalculatorLayout";
 import { Slider, ResultStat } from "../ui/Slider";
+import { SaveCalcButton } from "./SaveCalcButton";
 
 const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -112,6 +113,12 @@ export function SWPCalculator() {
                 )} remaining.`}
           </p>
         </div>
+        <SaveCalcButton
+          type="swp"
+          inputs={{ corpus, withdrawal, rate, years }}
+          result={{ totalWithdrawn, finalBalance, depletedYear }}
+          label={`SWP ${inr(corpus)} / ${inr(withdrawal)}-mo`}
+        />
       </div>
     </CalculatorLayout>
   );

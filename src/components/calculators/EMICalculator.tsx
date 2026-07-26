@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalculatorLayout } from "../ui/CalculatorLayout";
 import { Slider, ResultStat } from "../ui/Slider";
+import { SaveCalcButton } from "./SaveCalcButton";
 
 const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -60,10 +61,18 @@ export function EMICalculator() {
         />
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4">
-        <ResultStat label="Monthly EMI" value={inr(emi)} accent />
-        <ResultStat label="Total Interest" value={inr(totalInterest)} />
-        <ResultStat label="Total Payment" value={inr(totalPayment)} />
+      <div className="space-y-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4">
+          <ResultStat label="Monthly EMI" value={inr(emi)} accent />
+          <ResultStat label="Total Interest" value={inr(totalInterest)} />
+          <ResultStat label="Total Payment" value={inr(totalPayment)} />
+        </div>
+        <SaveCalcButton
+          type="emi"
+          inputs={{ principal, rate, years }}
+          result={{ emi, totalInterest, totalPayment }}
+          label={`EMI ${inr(principal)} @ ${rate}% for ${years}y`}
+        />
       </div>
     </CalculatorLayout>
   );

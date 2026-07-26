@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SectionHeading, GradientIcon } from "@/components/company/SectionHeading";
 import { PageShell } from "@/components/company/PageShell";
 import { SocialLinks } from "@/components/layout/SocialLinks";
+import ContactForm from "./ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact Us | KuberaNow",
@@ -262,6 +263,9 @@ export default function ContactPage() {
                 </div>
               </div>
             </article>
+
+            {/* Contact form (writes to DB) */}
+            <ContactForm />
           </section>
         </div>
 

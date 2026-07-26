@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalculatorLayout } from "../ui/CalculatorLayout";
 import { Slider, ResultStat } from "../ui/Slider";
+import { SaveCalcButton } from "./SaveCalcButton";
 
 const inr = (n: number) =>
   "₹" + Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -112,6 +113,12 @@ export function TaxCalculator() {
             in taxes for this income.
           </p>
         </div>
+        <SaveCalcButton
+          type="tax"
+          inputs={{ income, deductions }}
+          result={{ newTax, oldTax, best }}
+          label={`Tax ${inr(income)} income (${best})`}
+        />
       </div>
     </CalculatorLayout>
   );
